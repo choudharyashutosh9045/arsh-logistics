@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARSH Logistics – Billing System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#1a1a2e;min-height:100vh;}
+.app{max-width:1150px;margin:0 auto;padding:1rem 1rem 3rem;}
+
+.topbar{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);border-radius:12px;padding:14px 20px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.brand{display:flex;align-items:center;gap:12px;}
+.logo-box{width:50px;height:50px;border-radius:9px;overflow:hidden;background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px dashed rgba(255,255,255,0.35);flex-shrink:0;}
+.logo-box img{width:100%;height:100%;object-fit:contain;border-radius:7px;}
+.logo-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;}
+.logo-ph span{font-size:8px;color:#aaa;text-align:center;line-height:1.3;margin-top:2px;}
+.logo-ph svg{width:20px;height:20px;fill:#bbb;}
+.brand-text .name{color:white;font-size:19px;font-weight:700;letter-spacing:0.02em;}
+.brand-text .tagline{color:rgba(255,255,255,0.5);font-size:11px;margin-top:2px;}
+.topbar-nav{display:flex;gap:6px;flex-wrap:wrap;}
+.topbar-nav button{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.85);padding:7px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:500;transition:all 0.15s;}
+.topbar-nav button:hover,.topbar-nav button.active{background:rgba(255,255,255,0.22);color:white;}
+
+.tabs{display:flex;gap:4px;margin-bottom:1rem;background:white;border-radius:10px;padding:5px;border:1px solid #e5e7eb;}
+.tab{flex:1;padding:9px 10px;font-size:13px;border:none;background:transparent;border-radius:7px;cursor:pointer;color:#6b7280;font-family:'DM Sans',sans-serif;font-weight:500;transition:all 0.15s;}
+.tab.active{background:#1a1a2e;color:white;}
+.section{display:none;}.section.active{display:block;}
+
+.card{background:white;border:1px solid #e5e7eb;border-radius:12px;padding:18px;margin-bottom:14px;}
+.card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#6b7280;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+
+.fg{display:flex;flex-direction:column;gap:5px;}.fg.full{grid-column:1/-1;}
+label{font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.04em;}
+input,select,textarea{border:1px solid #d1d5db;border-radius:7px;padding:8px 11px;font-size:13px;font-family:'DM Sans',sans-serif;background:white;color:#1a1a2e;outline:none;width:100%;transition:border-color 0.15s;}
+input:focus,select:focus{border-color:#1a1a2e;box-shadow:0 0 0 3px rgba(26,26,46,0.08);}
+input[type=file]{display:none;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;}
+
+.btn{padding:9px 17px;border-radius:7px;border:1px solid #d1d5db;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;transition:all 0.15s;display:inline-flex;align-items:center;gap:7px;font-weight:600;}
+.btn-dark{background:#1a1a2e;border-color:#1a1a2e;color:white;}.btn-dark:hover{background:#2d2d4e;}
+.btn-blue{background:#0f3460;border-color:#0f3460;color:white;}.btn-blue:hover{background:#16213e;}
+.btn-green{background:#059669;border-color:#059669;color:white;}.btn-green:hover{background:#047857;}
+.btn-red{background:#dc2626;border-color:#dc2626;color:white;}.btn-red:hover{background:#b91c1c;}
+.btn-ghost{background:transparent;color:#6b7280;}.btn-ghost:hover{background:#f3f4f6;color:#1a1a2e;}
+.btn-outline{background:white;color:#1a1a2e;border-color:#d1d5db;}.btn-outline:hover{background:#f9fafb;}
+.actions-row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap;}
+
+.party-select-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:14px;}
+.party-select-row .fg{flex:1;}
+
+.sh-wrap{overflow-x:auto;margin-bottom:12px;border:1px solid #e5e7eb;border-radius:8px;}
+table.sh{width:100%;border-collapse:collapse;font-size:11px;min-width:1100px;}
+table.sh th{background:#1a1a2e;color:white;padding:8px 6px;text-align:center;font-weight:700;font-size:9.5px;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap;}
+table.sh td{padding:5px 5px;border-bottom:1px solid #f3f4f6;text-align:center;vertical-align:middle;}
+table.sh tr:last-child td{border-bottom:none;}
+table.sh tr:nth-child(even) td{background:#fafafa;}
+table.sh td input{padding:4px 5px;font-size:11px;border-radius:5px;text-align:center;min-width:0;}
+.del-btn{background:none;border:none;cursor:pointer;color:#dc2626;font-size:17px;font-weight:700;padding:2px 7px;border-radius:4px;line-height:1;}.del-btn:hover{background:#fee2e2;}
+
+.totals-box{background:#f0f4ff;border:1px solid #dde3f0;border-radius:9px;padding:13px 17px;min-width:290px;}
+.trow{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#6b7280;}
+.trow.grand{font-size:17px;font-weight:700;border-top:1px solid #d1d5db;margin-top:7px;padding-top:9px;color:#1a1a2e;}
+
+.bill-item{background:white;border:1px solid #e5e7eb;border-radius:10px;padding:13px 16px;display:flex;align-items:center;gap:14px;margin-bottom:9px;transition:box-shadow 0.15s;}
+.bill-item:hover{box-shadow:0 2px 10px rgba(0,0,0,0.08);}
+.bill-num{font-size:12px;font-weight:700;color:#0f3460;min-width:100px;}
+.bill-party{font-size:14px;font-weight:600;flex:1;}
+.bill-meta{font-size:11px;color:#9ca3af;margin-top:2px;}
+.bill-amt{font-size:16px;font-weight:700;color:#059669;min-width:95px;text-align:right;}
+.bill-acts{display:flex;gap:5px;}
+
+.party-item{background:white;border:1px solid #e5e7eb;border-radius:10px;padding:13px 16px;display:flex;align-items:center;gap:12px;margin-bottom:9px;}
+.p-icon{width:38px;height:38px;background:#eff0ff;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+
+.empty{text-align:center;padding:3rem;color:#9ca3af;}
+.empty-icon{font-size:42px;margin-bottom:12px;}
+
+.logo-upload-area{border:2px dashed #d1d5db;border-radius:10px;padding:22px;text-align:center;cursor:pointer;transition:all 0.15s;background:#fafafa;}
+.logo-upload-area:hover{border-color:#1a1a2e;background:#f5f5ff;}
+
+.toast{position:fixed;bottom:24px;right:24px;background:#1a1a2e;color:white;padding:12px 20px;border-radius:9px;font-size:13px;font-weight:600;opacity:0;transform:translateY(10px);transition:all 0.25s;pointer-events:none;z-index:9999;max-width:300px;box-shadow:0 4px 20px rgba(0,0,0,0.25);}
+.toast.show{opacity:1;transform:translateY(0);}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:white;border-radius:14px;padding:26px;width:440px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,0.18);}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:18px;color:#1a1a2e;}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+
+.info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:14px 16px;font-size:13px;color:#1d4ed8;margin-bottom:14px;line-height:1.6;}
+.info-box b{font-weight:700;}
+
+@media(max-width:600px){
+  .grid2,.grid3,.grid4{grid-template-columns:1fr;}
+  .bill-item{flex-wrap:wrap;}
+  .topbar{flex-direction:column;align-items:flex-start;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo-box" onclick="document.getElementById('logoInput1').click()" title="Logo upload karo">
+        <input type="file" id="logoInput1" accept="image/*" onchange="uploadLogo(this)">
+        <div class="logo-ph" id="logoPH1">
+          <svg viewBox="0 0 24 24"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm13.5-9 1.96 2.5H17V9h2.5zM18 18c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/></svg>
+          <span>Logo<br>Upload</span>
+        </div>
+        <img id="logoImg1" src="" style="display:none;width:100%;height:100%;object-fit:contain;border-radius:7px;">
+      </div>
+      <div class="brand-text">
+        <div class="name" id="topName">ARSH Logistics</div>
+        <div class="tagline" id="topAddr">Roorkee, Haridwar, Uttarakhand</div>
+      </div>
+    </div>
+    <div class="topbar-nav">
+      <button onclick="switchTab('new')" id="tnav-new" class="active">+ New Invoice</button>
+      <button onclick="switchTab('list')" id="tnav-list">All Bills</button>
+      <button onclick="switchTab('parties')" id="tnav-parties">Parties</button>
+      <button onclick="switchTab('settings')" id="tnav-settings">Settings</button>
+    </div>
+  </div>
+
+  <!-- MOBILE TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('new')">New Invoice</button>
+    <button class="tab" onclick="switchTab('list')">All Bills</button>
+    <button class="tab" onclick="switchTab('parties')">Parties</button>
+    <button class="tab" onclick="switchTab('settings')">Settings</button>
+  </div>
+
+  <!-- ═══ NEW INVOICE ═══ -->
+  <div id="tab-new" class="section active">
+    <div class="card">
+      <div class="card-title">Invoice Details</div>
+      <div class="grid4">
+        <div class="fg"><label>Freight Bill No</label><input id="fBillNo" placeholder="2025/26/038"/></div>
+        <div class="fg"><label>Invoice Date</label><input type="date" id="fDate"/></div>
+        <div class="fg"><label>Due Date</label><input type="date" id="fDueDate"/></div>
+        <div class="fg"><label>From Location</label><input id="fFromLoc" placeholder="Roorkee"/></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>Party / Consignee</span>
+        <button class="btn btn-outline" style="font-size:11px;padding:5px 11px;" onclick="openPartyModal()">+ Party Save Karo</button>
+      </div>
+      <div class="party-select-row">
+        <div class="fg">
+          <label>Saved Party Select Karo (optional)</label>
+          <select id="partySelect" onchange="fillParty(this.value)">
+            <option value="">-- Saved party select karo ya neeche khud bharo --</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid3">
+        <div class="fg"><label>Party Name *</label><input id="fPartyName" placeholder="Grivaa Springs Pvt Ltd"/></div>
+        <div class="fg"><label>GSTIN</label><input id="fGstin" placeholder="05AAICG4793P1ZV"/></div>
+        <div class="fg"><label>Phone</label><input id="fPhone" placeholder="9876543210"/></div>
+        <div class="fg full"><label>Address</label><input id="fAddr" placeholder="Khasra no 135, Tansipur, Roorkee, Uttarakhand 247656"/></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>Shipment Details</span>
+        <button class="btn btn-outline" style="font-size:11px;padding:5px 11px;" onclick="addRow()">+ Row Add Karo</button>
+      </div>
+      <div class="sh-wrap">
+        <table class="sh">
+          <thead><tr>
+            <th>S.<br>No</th><th>Shipment<br>Date</th><th>LR<br>No.</th><th>Destination</th><th>CN<br>Number</th>
+            <th>Truck No</th><th>Invoice No</th><th>Pkgs</th><th>Weight<br>(Kgs)</th>
+            <th>Date of<br>Arrival</th><th>Date of<br>Delivery</th><th>Truck<br>Type</th>
+            <th>Freight<br>Amt (Rs.)</th><th>To Point<br>Charges(Rs.)</th><th>Unloading<br>Charge (Rs.)</th>
+            <th>Source<br>Detention(Rs.)</th><th>Destination<br>Detention(Rs.)</th><th>Total<br>Amount (Rs.)</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="shBody"></tbody>
+        </table>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-top:4px;">
+        <div></div>
+        <div class="totals-box">
+          <div class="trow"><span>Total Freight</span><span id="tFreight">₹0</span></div>
+          <div class="trow"><span>To Point + Unloading</span><span id="tExtra">₹0</span></div>
+          <div class="trow"><span>Detention Charges</span><span id="tDet">₹0</span></div>
+          <div class="trow grand"><span>Grand Total</span><span id="tGrand">₹0.00</span></div>
+        </div>
+      </div>
+      <div class="actions-row">
+        <button class="btn btn-ghost" onclick="clearForm()">Clear Form</button>
+        <button class="btn btn-green" onclick="saveBill()">💾 Save Invoice</button>
+        <button class="btn btn-dark" onclick="pdfFromForm()">⬇ PDF Download</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ALL BILLS ═══ -->
+  <div id="tab-list" class="section">
+    <div class="card">
+      <div class="card-title">Saare Saved Bills</div>
+      <div id="listWrap"></div>
+    </div>
+  </div>
+
+  <!-- ═══ PARTIES ═══ -->
+  <div id="tab-parties" class="section">
+    <div class="card">
+      <div class="card-title">
+        <span>Saved Parties</span>
+        <button class="btn btn-dark" style="font-size:11px;padding:6px 13px;" onclick="openPartyModal()">+ Party Add Karo</button>
+      </div>
+      <div id="partiesWrap"></div>
+    </div>
+  </div>
+
+  <!-- ═══ SETTINGS ═══ -->
+  <div id="tab-settings" class="section">
+    <div class="card">
+      <div class="card-title">Company / ARSH Logistics Details</div>
+      <div class="grid3">
+        <div class="fg"><label>Company Name</label><input id="cName" value="ARSH Logistics"/></div>
+        <div class="fg"><label>PAN No</label><input id="cPAN" placeholder="BSSPG9414K"/></div>
+        <div class="fg"><label>GSTIN</label><input id="cGSTIN" placeholder="05ARSHG9414K1ZA"/></div>
+        <div class="fg full"><label>Address</label><input id="cAddr" placeholder="Dehradun Road Near Power Grid Bhagwanpur, Roorkee, Haridwar, U.K. 247661"/></div>
+        <div class="fg"><label>Email</label><input id="cEmail" placeholder="info@arshlogistics.com"/></div>
+        <div class="fg"><label>Phone</label><input id="cPhone" placeholder="9876543210"/></div>
+        <div class="fg"><label>State Code</label><input id="cState" placeholder="5"/></div>
+        <div class="fg"><label>Account Name</label><input id="cAccName" placeholder="ARSH Logistics"/></div>
+        <div class="fg"><label>Account No</label><input id="cAccNo" placeholder="364205500142"/></div>
+        <div class="fg"><label>IFS Code</label><input id="cIFSC" placeholder="ICIC0003642"/></div>
+      </div>
+
+      <div class="card-title" style="margin-top:18px;margin-bottom:10px;">Company Logo</div>
+      <div class="logo-upload-area" id="logoArea" onclick="document.getElementById('logoInput2').click()">
+        <input type="file" id="logoInput2" accept="image/*" onchange="uploadLogo(this)">
+        <img id="logoImg2" src="" style="display:none;max-height:80px;max-width:220px;object-fit:contain;margin:0 auto 10px;display:block;display:none;">
+        <div id="logoUploadHint">
+          <div style="font-size:14px;font-weight:600;color:#6b7280;margin-bottom:5px;">📁 Logo Upload Karo (click karo)</div>
+          <div style="font-size:12px;color:#9ca3af;">PNG, JPG supported • PDF header mein print hoga</div>
+        </div>
+      </div>
+
+      <div class="actions-row">
+        <button class="btn btn-dark" onclick="saveCompany()">✅ Company Info Save Karo</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PARTY MODAL -->
+<div class="modal-overlay" id="partyModal">
+  <div class="modal">
+    <h3>🏢 Party / Client Save Karo</h3>
+    <div class="modal-grid">
+      <div class="fg full"><label>Party Name *</label><input id="mName" placeholder="Grivaa Springs Pvt Ltd"/></div>
+      <div class="fg"><label>GSTIN</label><input id="mGstin" placeholder="05AAICG4793P1ZV"/></div>
+      <div class="fg"><label>Phone</label><input id="mPhone" placeholder="9876543210"/></div>
+      <div class="fg full"><label>Address</label><input id="mAddr" placeholder="Khasra no 135, Tansipur, Roorkee"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closePartyModal()">Cancel</button>
+      <button class="btn btn-dark" onclick="saveParty()">Party Save Karo</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────
+let bills  = JSON.parse(localStorage.getItem('arsh_bills')   || '[]');
+let parties= JSON.parse(localStorage.getItem('arsh_parties') || '[]');
+let company= JSON.parse(localStorage.getItem('arsh_company') || JSON.stringify({
+  name:'ARSH Logistics', addr:'Dehradun Road Near Power Grid Bhagwanpur, Roorkee, Haridwar, U.K. 247661, India',
+  pan:'BSSPG9414K', gstin:'05BSSPG9414K1ZA', state:'5',
+  email:'southtprk@gmail.com', phone:'', accName:'South Transport Company',
+  accNo:'364205500142', ifsc:'ICIC0003642'
+}));
+let logoData = localStorage.getItem('arsh_logo') || '';
+let rows = [];
+
+// ─── INIT ──────────────────────────────────────────────────────────────
+function init(){
+  const today = new Date().toISOString().split('T')[0];
+  const due   = new Date(); due.setDate(due.getDate()+31);
+  document.getElementById('fDate').value    = today;
+  document.getElementById('fDueDate').value = due.toISOString().split('T')[0];
+  document.getElementById('fBillNo').value  = '2025/26/' + String(bills.length + 38).padStart(3,'0');
+  document.getElementById('fFromLoc').value = 'Roorkee';
+  updateTopBar();
+  loadCompanyFields();
+  if(logoData) setLogoPreview(logoData);
+  renderPartySelect();
+  rows = [{date:today,lr:'',dest:'',cn:'',truck:'',invNo:'',pkgs:'',wt:'',
+           arrival:today,delivery:today,truckType:'19FT06 TYRE',
+           freight:0,toPoint:0,unload:0,srcDet:0,dstDet:0}];
+  renderRows();
+}
+
+// ─── TOP BAR ───────────────────────────────────────────────────────────
+function updateTopBar(){
+  document.getElementById('topName').textContent = company.name || 'ARSH Logistics';
+  document.getElementById('topAddr').textContent = company.addr || '';
+}
+
+function loadCompanyFields(){
+  const map={cName:'name',cPAN:'pan',cGSTIN:'gstin',cAddr:'addr',cEmail:'email',
+             cPhone:'phone',cState:'state',cAccName:'accName',cAccNo:'accNo',cIFSC:'ifsc'};
+  Object.entries(map).forEach(([id,key])=>{
+    const el=document.getElementById(id); if(el) el.value=company[key]||'';
+  });
+}
+
+// ─── LOGO ──────────────────────────────────────────────────────────────
+function uploadLogo(input){
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    logoData=e.target.result;
+    localStorage.setItem('arsh_logo',logoData);
+    setLogoPreview(logoData);
+    toast('Logo upload ho gaya! ✅');
+  };
+  reader.readAsDataURL(file);
+}
+function setLogoPreview(src){
+  ['1','2'].forEach(n=>{
+    const img=document.getElementById('logoImg'+n);
+    const ph =document.getElementById('logoPH'+n);
+    if(img){img.src=src;img.style.display='block';}
+    if(ph) ph.style.display='none';
+  });
+  const hint=document.getElementById('logoUploadHint');
+  if(hint) hint.style.display='none';
+}
+
+// ─── TABS ──────────────────────────────────────────────────────────────
+function switchTab(t){
+  ['new','list','parties','settings'].forEach((x,i)=>{
+    document.getElementById('tab-'+x).classList.remove('active');
+    document.querySelectorAll('.tab')[i].classList.remove('active');
+    const nb=document.getElementById('tnav-'+x); if(nb) nb.classList.remove('active');
+  });
+  document.getElementById('tab-'+t).classList.add('active');
+  const idx=['new','list','parties','settings'].indexOf(t);
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+  const nb2=document.getElementById('tnav-'+t); if(nb2) nb2.classList.add('active');
+  if(t==='list')    renderList();
+  if(t==='parties') renderParties();
+}
+
+// ─── PARTY MODAL ───────────────────────────────────────────────────────
+function openPartyModal(){ document.getElementById('partyModal').classList.add('open'); }
+function closePartyModal(){
+  document.getElementById('partyModal').classList.remove('open');
+  ['mName','mGstin','mPhone','mAddr'].forEach(id=>document.getElementById(id).value='');
+}
+function saveParty(){
+  const name=document.getElementById('mName').value.trim();
+  if(!name){ toast('Party naam zaroori hai!',true); return; }
+  const p={id:Date.now().toString(), name,
+    gstin:document.getElementById('mGstin').value,
+    phone:document.getElementById('mPhone').value,
+    addr :document.getElementById('mAddr').value};
+  parties.unshift(p);
+  localStorage.setItem('arsh_parties',JSON.stringify(parties));
+  renderPartySelect();
+  closePartyModal();
+  toast('Party save ho gayi: '+name);
+}
+function fillParty(id){
+  if(!id) return;
+  const p=parties.find(x=>x.id===id); if(!p) return;
+  document.getElementById('fPartyName').value=p.name||'';
+  document.getElementById('fGstin').value    =p.gstin||'';
+  document.getElementById('fPhone').value    =p.phone||'';
+  document.getElementById('fAddr').value     =p.addr||'';
+}
+function renderPartySelect(){
+  const sel=document.getElementById('partySelect');
+  sel.innerHTML='<option value="">-- Saved party select karo ya neeche khud bharo --</option>'+
+    parties.map(p=>`<option value="${p.id}">${p.name}${p.gstin?' ('+p.gstin+')':''}</option>`).join('');
+}
+function renderParties(){
+  const w=document.getElementById('partiesWrap');
+  if(!parties.length){
+    w.innerHTML='<div class="empty"><div class="empty-icon">🏢</div><div style="font-weight:600;font-size:15px;">Koi party save nahi</div><div style="margin-top:6px;font-size:13px;">Upar wale button se add karo</div></div>';
+    return;
+  }
+  w.innerHTML=parties.map(p=>`
+    <div class="party-item">
+      <div class="p-icon">🏢</div>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:600;">${p.name}</div>
+        <div style="font-size:12px;color:#9ca3af;margin-top:3px;">${[p.gstin,p.phone,p.addr].filter(Boolean).join(' • ')}</div>
+      </div>
+      <button class="btn btn-red" style="font-size:11px;padding:5px 11px;" onclick="deleteParty('${p.id}')">Delete</button>
+    </div>`).join('');
+}
+function deleteParty(id){
+  parties=parties.filter(p=>p.id!==id);
+  localStorage.setItem('arsh_parties',JSON.stringify(parties));
+  renderPartySelect(); renderParties();
+  toast('Party delete ho gayi');
+}
+
+// ─── ROWS ──────────────────────────────────────────────────────────────
+function addRow(){
+  const today=new Date().toISOString().split('T')[0];
+  rows.push({date:today,lr:'',dest:'',cn:'',truck:'',invNo:'',pkgs:'',wt:'',
+             arrival:today,delivery:today,truckType:'',
+             freight:0,toPoint:0,unload:0,srcDet:0,dstDet:0});
+  renderRows();
+}
+function renderRows(){
+  document.getElementById('shBody').innerHTML=rows.map((r,i)=>`
+    <tr>
+      <td><b>${i+1}</b></td>
+      <td><input type="date" value="${r.date}" oninput="rows[${i}].date=this.value" style="min-width:118px;"/></td>
+      <td><input value="${r.lr}" oninput="rows[${i}].lr=this.value" style="width:52px;"/></td>
+      <td><input value="${r.dest}" oninput="rows[${i}].dest=this.value" style="width:75px;"/></td>
+      <td><input value="${r.cn}" oninput="rows[${i}].cn=this.value" style="width:52px;"/></td>
+      <td><input value="${r.truck}" oninput="rows[${i}].truck=this.value" style="width:88px;" placeholder="UP27AT7421"/></td>
+      <td><input value="${r.invNo}" oninput="rows[${i}].invNo=this.value" style="width:100px;" placeholder="GS/25-26/001"/></td>
+      <td><input type="number" value="${r.pkgs}" oninput="rows[${i}].pkgs=this.value" style="width:48px;"/></td>
+      <td><input type="number" value="${r.wt}" oninput="rows[${i}].wt=this.value" style="width:62px;"/></td>
+      <td><input type="date" value="${r.arrival}" oninput="rows[${i}].arrival=this.value" style="min-width:118px;"/></td>
+      <td><input type="date" value="${r.delivery}" oninput="rows[${i}].delivery=this.value" style="min-width:118px;"/></td>
+      <td><input value="${r.truckType}" oninput="rows[${i}].truckType=this.value" style="width:88px;"/></td>
+      <td><input type="number" value="${r.freight||0}" oninput="rows[${i}].freight=parseFloat(this.value)||0;calcTotals()" style="width:74px;"/></td>
+      <td><input type="number" value="${r.toPoint||0}" oninput="rows[${i}].toPoint=parseFloat(this.value)||0;calcTotals()" style="width:70px;"/></td>
+      <td><input type="number" value="${r.unload||0}" oninput="rows[${i}].unload=parseFloat(this.value)||0;calcTotals()" style="width:70px;"/></td>
+      <td><input type="number" value="${r.srcDet||0}" oninput="rows[${i}].srcDet=parseFloat(this.value)||0;calcTotals()" style="width:70px;"/></td>
+      <td><input type="number" value="${r.dstDet||0}" oninput="rows[${i}].dstDet=parseFloat(this.value)||0;calcTotals()" style="width:70px;"/></td>
+      <td style="font-weight:700;color:#059669;white-space:nowrap;" id="rt${i}">₹${rT(r).toLocaleString('en-IN')}</td>
+      <td><button class="del-btn" onclick="delRow(${i})">×</button></td>
+    </tr>`).join('');
+  calcTotals();
+}
+function rT(r){ return (r.freight||0)+(r.toPoint||0)+(r.unload||0)+(r.srcDet||0)+(r.dstDet||0); }
+function calcTotals(){
+  rows.forEach((_,i)=>{ const e=document.getElementById('rt'+i); if(e) e.textContent='₹'+rT(rows[i]).toLocaleString('en-IN'); });
+  const s=k=>rows.reduce((a,r)=>a+(r[k]||0),0);
+  document.getElementById('tFreight').textContent='₹'+s('freight').toLocaleString('en-IN');
+  document.getElementById('tExtra').textContent  ='₹'+(s('toPoint')+s('unload')).toLocaleString('en-IN');
+  document.getElementById('tDet').textContent    ='₹'+(s('srcDet')+s('dstDet')).toLocaleString('en-IN');
+  document.getElementById('tGrand').textContent  ='₹'+rows.reduce((a,r)=>a+rT(r),0).toLocaleString('en-IN');
+}
+function delRow(i){ if(rows.length===1){toast('Kam se kam 1 row chahiye!',true);return;} rows.splice(i,1); renderRows(); }
+
+// ─── BILL SAVE / CLEAR ─────────────────────────────────────────────────
+function getBillData(){
+  return { id:Date.now().toString(),
+    billNo:document.getElementById('fBillNo').value,
+    date:document.getElementById('fDate').value,
+    dueDate:document.getElementById('fDueDate').value,
+    fromLoc:document.getElementById('fFromLoc').value,
+    partyName:document.getElementById('fPartyName').value,
+    gstin:document.getElementById('fGstin').value,
+    phone:document.getElementById('fPhone').value,
+    addr:document.getElementById('fAddr').value,
+    rows:rows.map(r=>({...r})),
+    grand:rows.reduce((a,r)=>a+rT(r),0) };
+}
+function saveBill(){
+  const b=getBillData();
+  if(!b.partyName){ toast('Party naam zaroori hai!',true); return; }
+  bills.unshift(b);
+  localStorage.setItem('arsh_bills',JSON.stringify(bills));
+  toast('Invoice save ho gayi! ✅');
+}
+function clearForm(){
+  ['fPartyName','fGstin','fPhone','fAddr'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('partySelect').value='';
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('fBillNo').value='2025/26/'+String(bills.length+38).padStart(3,'0');
+  rows=[{date:today,lr:'',dest:'',cn:'',truck:'',invNo:'',pkgs:'',wt:'',
+         arrival:today,delivery:today,truckType:'19FT06 TYRE',
+         freight:0,toPoint:0,unload:0,srcDet:0,dstDet:0}];
+  renderRows();
+}
+function saveCompany(){
+  company={name:document.getElementById('cName').value,pan:document.getElementById('cPAN').value,
+    gstin:document.getElementById('cGSTIN').value,addr:document.getElementById('cAddr').value,
+    email:document.getElementById('cEmail').value,phone:document.getElementById('cPhone').value,
+    state:document.getElementById('cState').value,accName:document.getElementById('cAccName').value,
+    accNo:document.getElementById('cAccNo').value,ifsc:document.getElementById('cIFSC').value};
+  localStorage.setItem('arsh_company',JSON.stringify(company));
+  updateTopBar();
+  toast('Company info save ho gayi! ✅');
+}
+
+// ─── BILL LIST ─────────────────────────────────────────────────────────
+function renderList(){
+  const w=document.getElementById('listWrap');
+  if(!bills.length){
+    w.innerHTML='<div class="empty"><div class="empty-icon">🧾</div><div style="font-weight:600;font-size:16px;margin-bottom:5px;">Koi bill nahi</div><div style="font-size:13px;">Naya invoice banao</div></div>';
+    return;
+  }
+  w.innerHTML=bills.map(b=>`
+    <div class="bill-item">
+      <div><div class="bill-num">${b.billNo}</div><div style="font-size:10px;color:#9ca3af;">${fmtDate(b.date)}</div></div>
+      <div style="flex:1;min-width:0;">
+        <div class="bill-party">${b.partyName||'—'}</div>
+        <div class="bill-meta">${b.fromLoc||''} • ${b.rows.length} shipment${b.rows.length>1?'s':''}</div>
+      </div>
+      <div class="bill-amt">₹${(b.grand||0).toLocaleString('en-IN')}</div>
+      <div class="bill-acts">
+        <button class="btn btn-outline" style="font-size:11px;padding:5px 10px;" onclick="editBill('${b.id}')">Edit</button>
+        <button class="btn btn-dark"    style="font-size:11px;padding:5px 10px;" onclick="pdfFromSaved('${b.id}')">⬇ PDF</button>
+        <button class="btn btn-red"     style="font-size:11px;padding:5px 10px;" onclick="delBill('${b.id}')">Del</button>
+      </div>
+    </div>`).join('');
+}
+function delBill(id){
+  if(!confirm('Is bill ko delete karna chahte ho?')) return;
+  bills=bills.filter(b=>b.id!==id);
+  localStorage.setItem('arsh_bills',JSON.stringify(bills));
+  renderList(); toast('Bill deleted!');
+}
+function editBill(id){
+  const b=bills.find(x=>x.id===id); if(!b) return;
+  document.getElementById('fBillNo').value   =b.billNo;
+  document.getElementById('fDate').value     =b.date;
+  document.getElementById('fDueDate').value  =b.dueDate||'';
+  document.getElementById('fFromLoc').value  =b.fromLoc||'';
+  document.getElementById('fPartyName').value=b.partyName||'';
+  document.getElementById('fGstin').value    =b.gstin||'';
+  document.getElementById('fPhone').value    =b.phone||'';
+  document.getElementById('fAddr').value     =b.addr||'';
+  rows=b.rows.map(r=>({...r}));
+  renderRows(); switchTab('new');
+}
+
+// ─── PDF ───────────────────────────────────────────────────────────────
+function pdfFromForm(){ const b=getBillData(); if(!b.partyName){toast('Party naam zaroori hai!',true);return;} makePDF(b); }
+function pdfFromSaved(id){ const b=bills.find(x=>x.id===id); if(b) makePDF(b); }
+
+function fmtDate(d){
+  if(!d) return '';
+  const p=d.split('-'); return p[2]+'/'+p[1]+'/'+p[0];
+}
+
+function numWords(n){
+  const a=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten',
+           'Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const b=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  if(n===0) return 'Zero';
+  function h(num){
+    if(!num) return '';
+    if(num<20)  return a[num]+' ';
+    if(num<100) return b[Math.floor(num/10)]+' '+(num%10?a[num%10]+' ':'');
+    if(num<1000)     return a[Math.floor(num/100)]+' Hundred '+(num%100?h(num%100):'');
+    if(num<100000)   return h(Math.floor(num/1000))+'Thousand '+(num%1000?h(num%1000):'');
+    if(num<10000000) return h(Math.floor(num/100000))+'Lakh '+(num%100000?h(num%100000):'');
+    return h(Math.floor(num/10000000))+'Crore '+(num%10000000?h(num%10000000):'');
+  }
+  return h(Math.round(n)).trim()+' Rupees Only';
+}
+
+function makePDF(b){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const pw=297, mg=10;
+  let y=mg;
+
+  // Header
+  doc.setFillColor(26,26,46); doc.rect(0,0,pw,26,'F');
+  const cName = company.name || 'ARSH Logistics';
+
+  if(logoData){
+    try{ doc.addImage(logoData,'PNG',mg,3,20,20); } catch(e){}
+    doc.setFontSize(15); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+    doc.text(cName, mg+24, 11);
+    doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(company.addr||'', mg+24, 17, {maxWidth:155});
+  } else {
+    doc.setFontSize(15); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+    doc.text(cName, mg, 11);
+    doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(company.addr||'', mg, 17, {maxWidth:165});
+  }
+  doc.setFontSize(12); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+  doc.text('INVOICE', pw/2, 15, null, null, 'center');
+  y=30;
+
+  // To box & Bill info box
+  doc.setDrawColor(200,200,200); doc.setFillColor(252,252,250);
+  doc.rect(mg, y, 88, 32, 'FD');
+  doc.rect(pw-mg-70, y, 70, 32, 'FD');
+
+  doc.setTextColor(30,30,30); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.text('To,', mg+3, y+7);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  doc.text(b.partyName||'', mg+3, y+13, {maxWidth:83});
+  doc.setFontSize(8);
+  if(b.addr) doc.text(b.addr, mg+3, y+19, {maxWidth:83});
+  if(b.gstin) doc.text('GSTIN: '+b.gstin, mg+3, y+28);
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(26,26,46);
+  doc.text('Freight Bill No: '+b.billNo, pw-mg-67, y+8);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(50,50,50);
+  doc.text('Invoice Date:  '+fmtDate(b.date),   pw-mg-67, y+16);
+  doc.text('Due Date:       '+(b.dueDate?fmtDate(b.dueDate):''), pw-mg-67, y+23);
+
+  doc.setFontSize(8.5); doc.setFont('helvetica','normal'); doc.setTextColor(60,60,60);
+  doc.text('From location: '+(b.fromLoc||''), mg, y+37);
+  y+=40;
+
+  // Table columns definition
+  const cols=[
+    {h:'S.\nNo',w:7},{h:'Shipment\nDate',w:19},{h:'LR\nNo.',w:9},{h:'Dest.',w:15},
+    {h:'CN\nNumber',w:9},{h:'Truck No',w:18},{h:'Invoice No',w:21},{h:'Pkgs',w:8},
+    {h:'Weight\n(Kgs)',w:11},{h:'Date of\nArrival',w:19},{h:'Date of\nDelivery',w:19},
+    {h:'Truck\nType',w:17},
+    {h:'Freight\nAmt (Rs.)',w:15},{h:'To Point\nCharges(Rs.)',w:14},{h:'Unloading\nCharge (Rs.)',w:14},
+    {h:'Source\nDetention\n(Rs.)',w:13},{h:'Destination\nDetention\n(Rs.)',w:13},
+    {h:'Total\nAmount (Rs.)',w:15}
+  ];
+  const tW=cols.reduce((s,c)=>s+c.w,0);
+  const sc=cols.map(c=>({...c, sw:c.w*(pw-2*mg)/tW}));
+
+  // Table header row
+  doc.setFillColor(26,26,46); doc.rect(mg, y, pw-2*mg, 12, 'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(6.0); doc.setFont('helvetica','bold');
+  let cx=mg;
+  sc.forEach(c=>{
+    const lines=c.h.split('\n');
+    const lh=3.5, startY=y+(12-lines.length*lh)/2+lh*0.7;
+    lines.forEach((l,li)=>doc.text(l, cx+c.sw/2, startY+li*lh, null,null,'center'));
+    cx+=c.sw;
+  });
+  y+=12;
+
+  // Data rows
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.2);
+  b.rows.forEach((r,ri)=>{
+    doc.setFillColor(ri%2===0?255:248, ri%2===0?255:248, ri%2===0?255:244);
+    doc.rect(mg, y, pw-2*mg, 9, 'F');
+    doc.setDrawColor(220,220,220); doc.rect(mg, y, pw-2*mg, 9, 'D');
+    doc.setTextColor(20,20,20);
+    const vals=[
+      ri+1, fmtDate(r.date), r.lr, r.dest, r.cn, r.truck, r.invNo, r.pkgs, r.wt,
+      fmtDate(r.arrival), fmtDate(r.delivery), r.truckType,
+      Number(r.freight||0).toFixed(2), Number(r.toPoint||0).toFixed(2),
+      Number(r.unload||0).toFixed(2),  Number(r.srcDet||0).toFixed(2),
+      Number(r.dstDet||0).toFixed(2),  rT(r).toFixed(2)
+    ];
+    cx=mg;
+    sc.forEach((c,ci)=>{ doc.text(String(vals[ci]??''), cx+c.sw/2, y+5.8, null,null,'center'); cx+=c.sw; });
+    y+=9;
+  });
+
+  // Total in words row
+  const grand=b.rows.reduce((s,r)=>s+rT(r),0);
+  doc.setFillColor(232,240,255); doc.rect(mg,y,pw-2*mg,9,'F');
+  doc.setDrawColor(180,190,220); doc.rect(mg,y,pw-2*mg,9,'D');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(26,26,46);
+  doc.text('Total in words (Rs.) : '+numWords(grand), mg+3, y+6);
+  doc.text(grand.toFixed(2), pw-mg-3, y+6, null,null,'right');
+  y+=14;
+
+  // Notes
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.2); doc.setTextColor(90,90,90);
+  doc.text('Any changes or discrepancies should be highlighted within 5 working days else it would be considered final.', mg, y);
+  doc.text('Please send all remittance details to "'+(company.email||'info@arshlogistics.com')+'".', mg, y+4.5);
+  y+=12;
+
+  // Bottom: bank info + signature
+  doc.setFillColor(250,250,248); doc.setDrawColor(200,200,200);
+  doc.rect(mg, y, 95, 32, 'FD');
+  [['Our PAN No.',  company.pan||'—'],
+   [cName+' GSTIN', company.gstin||'—'],
+   ['State Code',   company.state||'—'],
+   ['Account name', company.accName||cName],
+   ['Account no',   company.accNo||'—'],
+   ['IFS Code',     company.ifsc||'—']
+  ].forEach(([k,v],i)=>{
+    doc.setFont('helvetica','bold');   doc.setFontSize(8); doc.setTextColor(50,50,50);
+    doc.text(k, mg+3, y+5+i*4.6);
+    doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30);
+    doc.text(v, mg+42, y+5+i*4.6);
+  });
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(26,26,46);
+  doc.text('For '+cName.toUpperCase(), pw-mg-60, y+9);
+  doc.setDrawColor(80,80,80);
+  doc.line(pw-mg-62, y+26, pw-mg, y+26);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80,80,80);
+  doc.text('(Authorized Signatory)', pw-mg-3, y+30, null,null,'right');
+
+  doc.save('Invoice-'+(b.billNo||'bill').replace(/\//g,'-')+'-'+(b.partyName||'party').replace(/\s+/g,'_')+'.pdf');
+  toast('PDF download ho gayi! 🎉');
+}
+
+// ─── TOAST ─────────────────────────────────────────────────────────────
+function toast(msg, isErr=false, dur=2500){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.background=isErr?'#dc2626':'#1a1a2e';
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), dur);
+}
+
+// ─── START ─────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
