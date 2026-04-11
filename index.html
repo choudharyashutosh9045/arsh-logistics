@@ -178,16 +178,15 @@ table.btbl td input:focus{outline:none;}
       </div>
       <div class="card-title" style="margin-top:16px;margin-bottom:10px;">Bank Details</div>
       <table class="btbl">
-        <thead><tr><th>Field</th><th>Value</th><th>Field</th><th>Value</th></tr></thead>
+        <thead><tr><th style="width:30%;">Field</th><th>Value</th></tr></thead>
         <tbody>
-          <tr>
-            <td class="lbl">Account Name</td><td><input id="fcAccName" placeholder="ARSH Logistics"/></td>
-            <td class="lbl">Account No</td><td><input id="fcAccNo" placeholder="364205500142"/></td>
-          </tr>
-          <tr>
-            <td class="lbl">IFS Code</td><td><input id="fcIFSC" placeholder="ICIC0003642"/></td>
-            <td class="lbl">Bank Name</td><td><input id="fcBank" placeholder="ICICI Bank"/></td>
-          </tr>
+          <tr><td class="lbl">1. PAN No</td><td><input id="fcPAN2" placeholder="BSSPG9414K" oninput="document.getElementById('fcPAN').value=this.value"/></td></tr>
+          <tr><td class="lbl">2. GST No</td><td><input id="fcGSTIN2" placeholder="05ARSHG9414K1ZA" oninput="document.getElementById('fcGSTIN').value=this.value"/></td></tr>
+          <tr><td class="lbl">3. State Code</td><td><input id="fcState2" placeholder="5" oninput="document.getElementById('fcState').value=this.value"/></td></tr>
+          <tr><td class="lbl">4. Bank Name</td><td><input id="fcBank" placeholder="ICICI Bank"/></td></tr>
+          <tr><td class="lbl">5. Account Name</td><td><input id="fcAccName" placeholder="ARSH Logistics"/></td></tr>
+          <tr><td class="lbl">6. Account No</td><td><input id="fcAccNo" placeholder="364205500142"/></td></tr>
+          <tr><td class="lbl">7. IFS Code</td><td><input id="fcIFSC" placeholder="ICIC0003642"/></td></tr>
         </tbody>
       </table>
     </div>
@@ -424,12 +423,11 @@ async function saveCompanyDB(){
 }
 function fillCompany(id){
   if(!id)return;const c=companies[id];if(!c)return;
-  document.getElementById('fcName').value=c.name||'';document.getElementById('fcPAN').value=c.pan||'';
-  document.getElementById('fcGSTIN').value=c.gstin||'';document.getElementById('fcAddr').value=c.addr||'';
-  document.getElementById('fcState').value=c.state||'';document.getElementById('fcEmail').value=c.email||'';
-  document.getElementById('fcPhone').value=c.phone||'';document.getElementById('fcAccName').value=c.accName||'';
-  document.getElementById('fcAccNo').value=c.accNo||'';document.getElementById('fcIFSC').value=c.ifsc||'';
-  document.getElementById('fcBank').value=c.bank||'';
+  const set=(i,v)=>{const el=document.getElementById(i);if(el)el.value=v||'';};
+  set('fcName',c.name);set('fcPAN',c.pan);set('fcGSTIN',c.gstin);set('fcAddr',c.addr);
+  set('fcState',c.state);set('fcEmail',c.email);set('fcPhone',c.phone);
+  set('fcAccName',c.accName);set('fcAccNo',c.accNo);set('fcIFSC',c.ifsc);set('fcBank',c.bank);
+  set('fcPAN2',c.pan);set('fcGSTIN2',c.gstin);set('fcState2',c.state);
 }
 function renderCompanySelect(){
   const sel=document.getElementById('companySelect');
@@ -627,19 +625,25 @@ function makePDF(b){
   doc.setFillColor(26,26,46);doc.rect(mg,y,bw,8,'F');
   doc.setTextColor(255,255,255);doc.setFontSize(8);doc.setFont('helvetica','bold');
   doc.text('Bank & Company Details',mg+bw/2,y+5.5,null,null,'center');y+=8;
-  const bankRows=[['PAN No.',b.cPAN||'—','Account Name',b.cAccName||cName],['GSTIN',b.cGSTIN||'—','Account No',b.cAccNo||'—'],['State Code',b.cState||'—','IFS Code',b.cIFSC||'—'],['Bank Name',b.cBank||'—','Email',b.cEmail||'—']];
-  const colWs=[20,33,24,28];
+  const bankRows=[
+    ['1. PAN No.',b.cPAN||'—'],
+    ['2. GSTIN No.',b.cGSTIN||'—'],
+    ['3. State Code',b.cState||'—'],
+    ['4. Bank Name',b.cBank||'—'],
+    ['5. Account Name',b.cAccName||cName],
+    ['6. Account No',b.cAccNo||'—'],
+    ['7. IFS Code',b.cIFSC||'—']
+  ];
+  const lbW=35, valW=bw-lbW;
   bankRows.forEach((row,ri)=>{
     doc.setFillColor(ri%2===0?252:246,ri%2===0?252:248,ri%2===0?250:255);
     doc.rect(mg,y,bw,7,'F');doc.setDrawColor(200,200,200);doc.rect(mg,y,bw,7,'D');
-    let bxc=mg;
-    row.forEach((cell,ci)=>{
-      doc.setFont('helvetica',ci%2===0?'bold':'normal');doc.setFontSize(7.2);
-      doc.setTextColor(ci%2===0?80:20,ci%2===0?80:20,ci%2===0?80:20);
-      doc.text(String(cell),bxc+colWs[ci]/2,y+4.8,null,null,'center');
-      if(ci<3){doc.setDrawColor(200,200,200);doc.line(bxc+colWs[ci],y,bxc+colWs[ci],y+7);}
-      bxc+=colWs[ci];
-    });y+=7;
+    doc.setFont('helvetica','bold');doc.setFontSize(7.2);doc.setTextColor(80,80,80);
+    doc.text(row[0],mg+3,y+4.8);
+    doc.setDrawColor(200,200,200);doc.line(mg+lbW,y,mg+lbW,y+7);
+    doc.setFont('helvetica','normal');doc.setTextColor(20,20,20);
+    doc.text(String(row[1]),mg+lbW+3,y+4.8);
+    y+=7;
   });
   // Signature
   const sigY=y-28;
