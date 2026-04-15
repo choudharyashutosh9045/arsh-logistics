@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ARSH Logistics">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>ARSH Logistics – Live Billing System</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script>
@@ -124,8 +131,12 @@ table.btbl td input:focus{outline:none;}
       </div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+      <div style="display:flex;align-items:center;gap:8px;">
       <div class="sync-status"><span class="sync-dot off" id="syncDot"></span><span id="syncText">Connecting...</span></div>
+      <button id="installBtn" onclick="installApp()" style="display:none;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:6px 12px;border-radius:7px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:600;">📲 App Install Karo</button>
+    </div>
       <div class="topbar-nav">
+        <button onclick="switchTab('scan')" id="tnav-scan">📷 Scan Doc</button>
         <button onclick="switchTab('new')" id="tnav-new" class="active">+ New Invoice</button>
         <button onclick="switchTab('list')" id="tnav-list">All Bills</button>
         <button onclick="switchTab('parties')" id="tnav-parties">Parties</button>
@@ -136,6 +147,7 @@ table.btbl td input:focus{outline:none;}
   </div>
 
   <div class="tabs">
+    <button class="tab" onclick="switchTab('scan')">📷 Scan</button>
     <button class="tab active" onclick="switchTab('new')">New Invoice</button>
     <button class="tab" onclick="switchTab('list')">All Bills</button>
     <button class="tab" onclick="switchTab('parties')">Parties</button>
@@ -263,6 +275,59 @@ table.btbl td input:focus{outline:none;}
     </div>
   </div>
 
+  <!-- SCAN TAB -->
+  <div id="tab-scan" class="section">
+    <div class="card">
+      <div class="card-title">📷 Document Scan — AI Se Data Extract Karo</div>
+      <div id="scanUploadArea" style="border:2px dashed #d1d5db;border-radius:12px;padding:32px;text-align:center;cursor:pointer;background:#fafafa;transition:all 0.2s;" onclick="document.getElementById('scanFileInput').click()" ondragover="event.preventDefault();this.style.borderColor='#1a1a2e'" ondrop="handleDrop(event)">
+        <input type="file" id="scanFileInput" accept="image/*,application/pdf" onchange="handleScanFile(this)">
+        <div id="scanPreviewWrap" style="display:none;margin-bottom:16px;">
+          <img id="scanPreview" style="max-width:100%;max-height:300px;border-radius:8px;border:1px solid #e5e7eb;"/>
+        </div>
+        <div id="scanUploadHint">
+          <div style="font-size:48px;margin-bottom:12px;">📄</div>
+          <div style="font-size:16px;font-weight:600;color:#374151;margin-bottom:6px;">Document Upload Karo</div>
+          <div style="font-size:13px;color:#9ca3af;">Photo khicho, gallery se lo ya drag & drop karo</div>
+          <div style="font-size:12px;color:#d1d5db;margin-top:6px;">JPG, PNG, PDF supported</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+        <button class="btn btn-dark" onclick="document.getElementById('scanFileInput').click()" style="flex:1;">📁 Gallery Se Upload</button>
+        <button class="btn btn-outline" onclick="openCamera()" style="flex:1;">📷 Camera Se Khicho</button>
+        <button class="btn btn-red" id="clearScanBtn" onclick="clearScan()" style="display:none;">✕ Clear</button>
+      </div>
+    </div>
+
+    <div id="scanProcessCard" style="display:none;" class="card">
+      <div class="card-title">🤖 AI Processing</div>
+      <div id="scanStatus" style="text-align:center;padding:24px;">
+        <div class="spinner" style="margin:0 auto 14px;border-color:rgba(26,26,46,0.15);border-top-color:#1a1a2e;width:36px;height:36px;border-width:3px;"></div>
+        <div style="font-size:14px;font-weight:600;color:#374151;" id="scanStatusText">Document analyze ho raha hai...</div>
+        <div style="font-size:12px;color:#9ca3af;margin-top:4px;">AI data extract kar raha hai, thoda wait karo</div>
+      </div>
+    </div>
+
+    <div id="scanResultCard" style="display:none;" class="card">
+      <div class="card-title">
+        <span>✅ AI Ne Data Extract Kiya — Check Karo & Edit Karo</span>
+        <button class="btn btn-green" onclick="fillFormFromScan()">⚡ Invoice Form Mein Bhejo</button>
+      </div>
+      <div id="scanResultFields" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+      <div style="margin-top:14px;padding:12px;background:#f0fff8;border:1px solid #bbf7d0;border-radius:8px;font-size:13px;color:#065f46;">
+        💡 <b>Tip:</b> Data check karo, zaroorat ho toh edit karo, phir "Invoice Form Mein Bhejo" pe click karo — ek click mein bill ready!
+      </div>
+    </div>
+
+    <div id="scanErrorCard" style="display:none;" class="card">
+      <div style="text-align:center;padding:20px;">
+        <div style="font-size:36px;margin-bottom:10px;">❌</div>
+        <div style="font-size:15px;font-weight:600;color:#dc2626;margin-bottom:6px;">Document Read Nahi Ho Saka</div>
+        <div style="font-size:13px;color:#9ca3af;" id="scanErrorText">Document clear nahi hai ya format support nahi hai.</div>
+        <button class="btn btn-outline" onclick="clearScan()" style="margin-top:14px;">Dobara Try Karo</button>
+      </div>
+    </div>
+  </div>
+
   <!-- COMPANIES -->
   <div id="tab-companies" class="section">
     <div class="card">
@@ -372,13 +437,13 @@ function setLogoPreview(src){
 }
 
 function switchTab(t){
-  ['new','list','parties','companies','settings'].forEach((x,i)=>{
+  ['scan','new','list','parties','companies','settings'].forEach((x,i)=>{
     document.getElementById('tab-'+x).classList.remove('active');
     document.querySelectorAll('.tab')[i].classList.remove('active');
     const b=document.getElementById('tnav-'+x);if(b)b.classList.remove('active');
   });
   document.getElementById('tab-'+t).classList.add('active');
-  const idx=['new','list','parties','companies','settings'].indexOf(t);
+  const idx=['scan','new','list','parties','companies','settings'].indexOf(t);
   document.querySelectorAll('.tab')[idx].classList.add('active');
   const nb=document.getElementById('tnav-'+t);if(nb)nb.classList.add('active');
 }
@@ -647,7 +712,7 @@ function makePDF(b){
   doc.text('Bank & Company Details',mg+bw/2,y+5.5,null,null,'center');y+=8;
   const bankRows=[
     ['1. PAN No.',b.cPAN||'—'],
-    ['2. GSTIN No.',b.cGSTIN||'—'],
+    ['2. GST No.',b.cGSTIN||'—'],
     ['3. State Code',b.cState||'—'],
     ['4. Bank Name',b.cBank||'—'],
     ['5. Account Name',b.cAccName||cName],
@@ -677,7 +742,241 @@ function makePDF(b){
   toast('PDF download ho gayi! 🎉');
 }
 
+// ══════════════════════════════════════════
+// SCAN & AI EXTRACT
+// ══════════════════════════════════════════
+const CLAUDE_API_KEY = "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";
+let scanImageBase64 = null;
+let scanExtracted = {};
+
+function handleDrop(e){
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if(file) processFile(file);
+}
+function handleScanFile(input){
+  const file = input.files[0];
+  if(file) processFile(file);
+}
+function openCamera(){
+  const input = document.createElement('input');
+  input.type='file'; input.accept='image/*'; input.capture='environment';
+  input.onchange = e => processFile(e.target.files[0]);
+  input.click();
+}
+function processFile(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const dataUrl = e.target.result;
+    scanImageBase64 = dataUrl.split(',')[1];
+    const mime = file.type || 'image/jpeg';
+    // Show preview
+    document.getElementById('scanPreview').src = dataUrl;
+    document.getElementById('scanPreviewWrap').style.display = 'block';
+    document.getElementById('scanUploadHint').style.display = 'none';
+    document.getElementById('clearScanBtn').style.display = 'inline-flex';
+    // Start AI extraction
+    extractWithAI(scanImageBase64, mime);
+  };
+  reader.readAsDataURL(file);
+}
+function clearScan(){
+  scanImageBase64=null; scanExtracted={};
+  document.getElementById('scanPreviewWrap').style.display='none';
+  document.getElementById('scanUploadHint').style.display='block';
+  document.getElementById('clearScanBtn').style.display='none';
+  document.getElementById('scanProcessCard').style.display='none';
+  document.getElementById('scanResultCard').style.display='none';
+  document.getElementById('scanErrorCard').style.display='none';
+  document.getElementById('scanFileInput').value='';
+}
+
+async function extractWithAI(base64, mime){
+  document.getElementById('scanProcessCard').style.display='block';
+  document.getElementById('scanResultCard').style.display='none';
+  document.getElementById('scanErrorCard').style.display='none';
+  document.getElementById('scanStatusText').textContent='Document analyze ho raha hai...';
+
+  const prompt = `You are analyzing a transport/logistics invoice or document. Extract ALL available information and return ONLY a JSON object with these fields (use empty string "" if not found):
+{
+  "billNo": "freight bill or invoice number",
+  "date": "invoice date in YYYY-MM-DD format",
+  "dueDate": "due date in YYYY-MM-DD format",
+  "fromLoc": "from/pickup location city",
+  "partyName": "consignee/receiver company name",
+  "gstin": "receiver GSTIN number",
+  "phone": "receiver phone",
+  "addr": "receiver full address",
+  "cName": "sender/transport company name",
+  "cPAN": "sender PAN number",
+  "cGSTIN": "sender GSTIN",
+  "cAddr": "sender address",
+  "cState": "sender state code",
+  "cAccName": "bank account name",
+  "cAccNo": "bank account number",
+  "cIFSC": "IFSC code",
+  "cBank": "bank name",
+  "lrNo": "LR number",
+  "destination": "destination city",
+  "cnNumber": "CN number",
+  "truckNo": "vehicle/truck number",
+  "invoiceNo": "consignment invoice number",
+  "pkgs": "number of packages",
+  "weight": "weight in kg",
+  "truckType": "truck type",
+  "freight": "freight amount as number only",
+  "toPoint": "to point charges as number only",
+  "unloading": "unloading charges as number only",
+  "srcDetention": "source detention as number only",
+  "dstDetention": "destination detention as number only",
+  "totalAmount": "total amount as number only"
+}
+Return ONLY the JSON, no explanation, no markdown.`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-5',
+        max_tokens: 1500,
+        messages: [{
+          role: 'user',
+          content: [{
+            type: 'image',
+            source: { type: 'base64', media_type: mime, data: base64 }
+          },{
+            type: 'text',
+            text: prompt
+          }]
+        }]
+      })
+    });
+    const data = await resp.json();
+    if(data.error){ throw new Error(data.error.message); }
+    const text = data.content[0].text.trim();
+    const clean = text.replace(/```json|```/g,'').trim();
+    scanExtracted = JSON.parse(clean);
+    showScanResult(scanExtracted);
+  } catch(err){
+    document.getElementById('scanProcessCard').style.display='none';
+    document.getElementById('scanErrorCard').style.display='block';
+    document.getElementById('scanErrorText').textContent = err.message || 'Kuch error aaya. Dobara try karo.';
+    console.error(err);
+  }
+}
+
+function showScanResult(data){
+  document.getElementById('scanProcessCard').style.display='none';
+  document.getElementById('scanResultCard').style.display='block';
+
+  const fields = [
+    {key:'billNo',     label:'Freight Bill No'},
+    {key:'date',       label:'Invoice Date'},
+    {key:'dueDate',    label:'Due Date'},
+    {key:'fromLoc',    label:'From Location'},
+    {key:'partyName',  label:'Party Name'},
+    {key:'gstin',      label:'Party GSTIN'},
+    {key:'phone',      label:'Party Phone'},
+    {key:'addr',       label:'Party Address'},
+    {key:'cName',      label:'Company Name'},
+    {key:'cGSTIN',     label:'Company GSTIN'},
+    {key:'cPAN',       label:'PAN No'},
+    {key:'cAddr',      label:'Company Address'},
+    {key:'cState',     label:'State Code'},
+    {key:'cAccName',   label:'Account Name'},
+    {key:'cAccNo',     label:'Account No'},
+    {key:'cIFSC',      label:'IFS Code'},
+    {key:'cBank',      label:'Bank Name'},
+    {key:'lrNo',       label:'LR No'},
+    {key:'destination',label:'Destination'},
+    {key:'cnNumber',   label:'CN Number'},
+    {key:'truckNo',    label:'Truck No'},
+    {key:'invoiceNo',  label:'Invoice No'},
+    {key:'pkgs',       label:'Packages'},
+    {key:'weight',     label:'Weight (Kg)'},
+    {key:'truckType',  label:'Truck Type'},
+    {key:'freight',    label:'Freight Amt (Rs.)'},
+    {key:'toPoint',    label:'To Point Chg (Rs.)'},
+    {key:'unloading',  label:'Unloading Chg (Rs.)'},
+    {key:'srcDetention',label:'Src Detention (Rs.)'},
+    {key:'dstDetention',label:'Dst Detention (Rs.)'},
+    {key:'totalAmount',label:'Total Amount (Rs.)'},
+  ];
+
+  document.getElementById('scanResultFields').innerHTML = fields.map(f=>`
+    <div class="fg">
+      <label>${f.label}</label>
+      <input value="${data[f.key]||''}" oninput="scanExtracted['${f.key}']=this.value"
+        style="background:${data[f.key]?'#f0fff8':'white'};border-color:${data[f.key]?'#86efac':'#d1d5db'}"/>
+    </div>`).join('');
+}
+
+function fillFormFromScan(){
+  const d = scanExtracted;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;};
+  // Invoice details
+  set('fBillNo', d.billNo); set('fDate', d.date);
+  set('fDueDate', d.dueDate); set('fFromLoc', d.fromLoc);
+  // Party
+  set('fPartyName', d.partyName); set('fGstin', d.gstin);
+  set('fPhone', d.phone); set('fAddr', d.addr);
+  // Company
+  set('fcName', d.cName); set('fcPAN', d.cPAN); set('fcPAN2', d.cPAN);
+  set('fcGSTIN', d.cGSTIN); set('fcGSTIN2', d.cGSTIN);
+  set('fcAddr', d.cAddr); set('fcState', d.cState); set('fcState2', d.cState);
+  set('fcAccName', d.cAccName); set('fcAccNo', d.cAccNo);
+  set('fcIFSC', d.cIFSC); set('fcBank', d.cBank);
+  // Shipment row
+  const today = new Date().toISOString().split('T')[0];
+  rows = [{
+    date: d.date||today, lr: d.lrNo||'', dest: d.destination||'',
+    cn: d.cnNumber||'', truck: d.truckNo||'', invNo: d.invoiceNo||'',
+    pkgs: d.pkgs||'', wt: d.weight||'',
+    arrival: d.date||today, delivery: d.date||today,
+    truckType: d.truckType||'',
+    freight: parseFloat(d.freight)||0, toPoint: parseFloat(d.toPoint)||0,
+    unload: parseFloat(d.unloading)||0, srcDet: parseFloat(d.srcDetention)||0,
+    dstDet: parseFloat(d.dstDetention)||0
+  }];
+  renderRows();
+  switchTab('new');
+  toast('✅ Data form mein aa gaya! Check karo aur save karo.');
+}
+
 function toast(msg,isErr=false,dur=2500){const t=document.getElementById('toast');t.textContent=msg;t.style.background=isErr?'#dc2626':'#1a1a2e';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+
+function installApp(){
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(()=>{ deferredPrompt=null; document.getElementById('installBtn').style.display='none'; });
+  }
+}
+
+// PWA Service Worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').then(()=>{
+      console.log('ARSH Logistics PWA ready!');
+    }).catch(()=>{});
+  });
+}
+
+// PWA Install prompt
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show install button
+  const installBtn = document.getElementById('installBtn');
+  if(installBtn) installBtn.style.display='inline-flex';
+});
 </script>
 </body>
 </html>
