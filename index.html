@@ -685,20 +685,29 @@ async function processFile(id, file){
     try{
       const prompt = currentScanMode==='lr' ? getLRPrompt() : getInvoicePrompt();
       // Using Google Gemini (FREE)
-      const resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+claudeApiKey,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          contents:[{parts:[
-            {inline_data:{mime_type:mime,data:base64}},
-            {text:prompt}
-          ]}],
-          generationConfig:{temperature:0.1,maxOutputTokens:1500}
-        })
-      });
-      const data=await resp.json();
-      if(data.error)throw new Error(data.error.message||JSON.stringify(data.error));
-      const text=data.candidates[0].content.parts[0].text.trim().replace(/```json|```/g,'').trim();
+      // Try multiple Gemini models for compatibility
+      const models=['gemini-2.0-flash','gemini-1.5-flash','gemini-1.5-flash-latest'];
+      let data=null, text='';
+      for(const model of models){
+        try{
+          const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+claudeApiKey,{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({
+              contents:[{parts:[
+                {inline_data:{mime_type:mime,data:base64}},
+                {text:prompt}
+              ]}],
+              generationConfig:{temperature:0.1,maxOutputTokens:1500}
+            })
+          });
+          data=await r.json();
+          if(data.error){console.warn('Model',model,'failed:',data.error.message);continue;}
+          text=data.candidates[0].content.parts[0].text.trim().replace(/```json|```/g,'').trim();
+          break;
+        }catch(e){console.warn('Model',model,'error:',e);continue;}
+      }
+      if(!text)throw new Error('Koi bhi model kaam nahi kar raha. API key check karo.');
       const extracted=JSON.parse(text);
       // Mark done
       const fi=scanFiles.find(f=>f.id===id);if(fi){fi.status='done';fi.result=extracted;}
