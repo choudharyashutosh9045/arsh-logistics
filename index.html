@@ -25,6 +25,13 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  // Set PDF.js worker
+  if(typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#1a1a2e;min-height:100vh;}
@@ -675,54 +682,97 @@ function clearAllScans(){
 // ══════════════════════════════════════════
 async function processFile(id, file){
   document.getElementById('processingCard').style.display='block';
-  updateProcItem(id, 'processing', 'Reading file...');
+  updateProcItem(id,'processing','File read ho rahi hai...');
+  try{
+    if(!claudeApiKey){throw new Error('API Key set nahi hai! Settings tab mein jaao aur Gemini key save karo.');}
 
-  const reader=new FileReader();
-  reader.onload=async e=>{
-    const base64=e.target.result.split(',')[1];
-    const mime=file.type||'image/jpeg';
-    updateProcItem(id,'processing','AI analyze kar raha hai...');
-    try{
-      const prompt = currentScanMode==='lr' ? getLRPrompt() : getInvoicePrompt();
-      // Using Google Gemini (FREE)
-      // Try multiple Gemini models for compatibility
-      const models=['gemini-2.0-flash','gemini-1.5-flash','gemini-1.5-flash-latest'];
-      let data=null, text='';
-      for(const model of models){
-        try{
-          const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+claudeApiKey,{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({
-              contents:[{parts:[
-                {inline_data:{mime_type:mime,data:base64}},
-                {text:prompt}
-              ]}],
-              generationConfig:{temperature:0.1,maxOutputTokens:1500}
-            })
-          });
-          data=await r.json();
-          if(data.error){console.warn('Model',model,'failed:',data.error.message);continue;}
-          text=data.candidates[0].content.parts[0].text.trim().replace(/```json|```/g,'').trim();
-          break;
-        }catch(e){console.warn('Model',model,'error:',e);continue;}
-      }
-      if(!text)throw new Error('Koi bhi model kaam nahi kar raha. API key check karo.');
-      const extracted=JSON.parse(text);
-      // Mark done
-      const fi=scanFiles.find(f=>f.id===id);if(fi){fi.status='done';fi.result=extracted;}
-      scanResults.push({id, name:file.name, data:extracted});
-      updateProcItem(id,'done','Extracted! ✅');
-      renderFileChips();
-      renderResults();
-    }catch(err){
-      const fi=scanFiles.find(f=>f.id===id);if(fi)fi.status='error';
-      updateProcItem(id,'error','Error: '+(err.message||'Try again'));
-      renderFileChips();
-      toast('Error: '+err.message,true,4000);
+    // Convert to image (handle PDF)
+    let base64, mime;
+    if(file.type==='application/pdf'){
+      updateProcItem(id,'processing','PDF convert ho rahi hai...');
+      const result=await pdfToImage(file);
+      base64=result.base64; mime='image/jpeg';
+    } else {
+      const dataUrl=await readFileAsDataUrl(file);
+      base64=dataUrl.split(',')[1]; mime=file.type||'image/jpeg';
     }
-  };
-  reader.readAsDataURL(file);
+
+    updateProcItem(id,'processing','AI se data extract ho raha hai...');
+    const prompt=currentScanMode==='lr'?getLRPrompt():getInvoicePrompt();
+
+    // Try Gemini models in order
+    const models=['gemini-2.0-flash','gemini-1.5-flash','gemini-pro-vision'];
+    let text='', lastErr='';
+    for(const model of models){
+      try{
+        const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+claudeApiKey,{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            contents:[{parts:[{inline_data:{mime_type:mime,data:base64}},{text:prompt}]}],
+            generationConfig:{temperature:0.1,maxOutputTokens:1500}
+          })
+        });
+        const data=await r.json();
+        if(data.error){lastErr=data.error.message;continue;}
+        if(!data.candidates||!data.candidates[0]){lastErr='No response';continue;}
+        text=data.candidates[0].content.parts[0].text.trim().replace(/```json|```/g,'').trim();
+        if(text)break;
+      }catch(e){lastErr=e.message;continue;}
+    }
+    if(!text)throw new Error('Gemini error: '+lastErr+'. API key check karo (Settings tab).');
+
+    const extracted=JSON.parse(text);
+    const fi=scanFiles.find(f=>f.id===id);if(fi){fi.status='done';fi.result=extracted;}
+    scanResults.push({id,name:file.name,data:extracted});
+    updateProcItem(id,'done','Data extract ho gaya! ✅');
+    renderFileChips(); renderResults();
+  }catch(err){
+    const fi=scanFiles.find(f=>f.id===id);if(fi)fi.status='error';
+    updateProcItem(id,'error',err.message||'Error aaya, dobara try karo');
+    renderFileChips();
+    toast(err.message,true,6000);
+  }
+}
+
+// Helper: Read file as DataURL
+function readFileAsDataUrl(file){
+  return new Promise((res,rej)=>{
+    const reader=new FileReader();
+    reader.onload=e=>res(e.target.result);
+    reader.onerror=rej;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Helper: Convert PDF first page to JPEG base64
+async function pdfToImage(file){
+  return new Promise(async(res,rej)=>{
+    try{
+      // Load PDF.js if not loaded
+      if(typeof pdfjsLib==='undefined'){
+        rej(new Error('PDF.js load nahi hua'));return;
+      }
+      pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({data:arrayBuffer}).promise;
+      const page = await pdf.getPage(1); // First page
+      
+      const scale = 2.0; // Higher = better quality
+      const viewport = page.getViewport({scale});
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext('2d');
+      
+      await page.render({canvasContext:ctx, viewport}).promise;
+      
+      // Convert to JPEG
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      res({base64: dataUrl.split(',')[1], dataUrl});
+    }catch(e){rej(e);}
+  });
 }
 
 function getLRPrompt(){
