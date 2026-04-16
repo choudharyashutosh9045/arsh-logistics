@@ -230,7 +230,7 @@ table.btbl td input:focus{outline:none;}
   <div id="tab-scan" class="section">
     <div id="apiKeyAlert" class="api-alert" style="display:none;">
       <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-      <div><b>Claude API Key set nahi hai!</b> Settings tab mein jaao → API Key daalo → Save karo. Phir scan karega.</div>
+      <div><b>Google Gemini API Key set nahi hai!</b> Settings tab mein jaao → Free API Key daalo → Save karo.</div>
     </div>
 
     <!-- LR / Invoice Sub-tabs -->
@@ -417,13 +417,13 @@ table.btbl td input:focus{outline:none;}
   <div id="tab-settings" class="section">
     <!-- API KEY -->
     <div class="card">
-      <div class="card-title">🤖 Claude AI API Key (Scan ke liye zaroori)</div>
+      <div class="card-title">🤖 Google Gemini API Key (FREE - Scan ke liye zaroori)</div>
       <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;color:#9a3412;">
-        ⚠️ <b>Security Note:</b> API key sirf tumhara khaana chahiye. console.anthropic.com se new key lo. Old key revoke ho gayi thi kyunki public ho gayi thi.
+        ✅ <b>Google Gemini bilkul FREE hai!</b> aistudio.google.com pe jaao → Create API key → Yahan paste karo. Koi payment nahi!
       </div>
       <div class="fg" style="margin-bottom:10px;">
         <label>Claude API Key</label>
-        <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." />
+        <input type="password" id="apiKeyInput" placeholder="AIza... (Google Gemini Key)" />
       </div>
       <button class="btn btn-dark" onclick="saveApiKey()">🔑 API Key Save Karo</button>
     </div>
@@ -573,7 +573,7 @@ function initForm(){
 // ══════════════════════════════════════════
 async function saveApiKey(){
   const key=document.getElementById('apiKeyInput').value.trim();
-  if(!key||!key.startsWith('sk-')){toast('Valid API key daalo (sk-ant-... se shuru honi chahiye)',true);return;}
+  if(!key||key.length<10){toast('Valid Gemini API key daalo!',true);return;}
   await db.ref('settings/apiKey').set(key);
   claudeApiKey=key;
   toast('API Key save ho gayi! ✅');
@@ -684,26 +684,21 @@ async function processFile(id, file){
     updateProcItem(id,'processing','AI analyze kar raha hai...');
     try{
       const prompt = currentScanMode==='lr' ? getLRPrompt() : getInvoicePrompt();
-      const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      // Using Google Gemini (FREE)
+      const resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+claudeApiKey,{
         method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'x-api-key':claudeApiKey,
-          'anthropic-version':'2023-06-01',
-          'anthropic-dangerous-direct-browser-access':'true'
-        },
+        headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
-          model:'claude-opus-4-5',
-          max_tokens:1500,
-          messages:[{role:'user',content:[
-            {type:'image',source:{type:'base64',media_type:mime,data:base64}},
-            {type:'text',text:prompt}
-          ]}]
+          contents:[{parts:[
+            {inline_data:{mime_type:mime,data:base64}},
+            {text:prompt}
+          ]}],
+          generationConfig:{temperature:0.1,maxOutputTokens:1500}
         })
       });
       const data=await resp.json();
-      if(data.error)throw new Error(data.error.message);
-      const text=data.content[0].text.trim().replace(/```json|```/g,'').trim();
+      if(data.error)throw new Error(data.error.message||JSON.stringify(data.error));
+      const text=data.candidates[0].content.parts[0].text.trim().replace(/```json|```/g,'').trim();
       const extracted=JSON.parse(text);
       // Mark done
       const fi=scanFiles.find(f=>f.id===id);if(fi){fi.status='done';fi.result=extracted;}
@@ -1164,7 +1159,17 @@ function installApp(){
   if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;const btn=document.getElementById('installBtn');if(btn)btn.style.display='none';});}
 }
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg=>console.log('SW registered'))
+      .catch(err=>console.log('SW error:',err));
+  });
+}
+// Check if already installed
+if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone){
+  const btn=document.getElementById('installBtn');
+  if(btn) btn.style.display='none';
+  toast('App installed hai! ✅',false,2000);
 }
 
 // ══════════════════════════════════════════
