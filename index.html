@@ -581,9 +581,30 @@ function initForm(){
 async function saveApiKey(){
   const key=document.getElementById('apiKeyInput').value.trim();
   if(!key||key.length<10){toast('Valid Gemini API key daalo!',true);return;}
+  
+  // Test which model works
+  toast('API key test ho rahi hai...',false,3000);
+  const testModels=['gemini-2.0-flash','gemini-1.5-flash','gemini-1.5-flash-8b','gemini-2.0-flash-lite'];
+  let workingModel='';
+  for(const model of testModels){
+    try{
+      const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+key,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{parts:[{text:'Say OK'}]}],generationConfig:{maxOutputTokens:5}})
+      });
+      const d=await r.json();
+      if(!d.error && d.candidates){workingModel=model;break;}
+    }catch(e){}
+  }
+  
+  if(!workingModel){
+    toast('❌ Key kaam nahi kar rahi! Sahi key daalo.',true,5000);return;
+  }
+  
   await db.ref('settings/apiKey').set(key);
+  await db.ref('settings/workingModel').set(workingModel);
   claudeApiKey=key;
-  toast('API Key save ho gayi! ✅');
+  toast('✅ Key save! Working model: '+workingModel);
   document.getElementById('apiKeyAlert').style.display='none';
 }
 
@@ -701,7 +722,11 @@ async function processFile(id, file){
     const prompt=currentScanMode==='lr'?getLRPrompt():getInvoicePrompt();
 
     // Try Gemini models in order
-    const models=['gemini-2.0-flash','gemini-1.5-flash','gemini-1.5-pro'];
+    // Use saved working model first for speed
+    let savedModel='';
+    try{const sm=await db.ref('settings/workingModel').get();if(sm.val())savedModel=sm.val();}catch(e){}
+    const allModels=['gemini-2.0-flash','gemini-1.5-flash','gemini-1.5-flash-8b','gemini-2.0-flash-lite'];
+    const models=savedModel?[savedModel,...allModels.filter(m=>m!==savedModel)]:allModels;
     let text='', lastErr='';
     for(const model of models){
       try{
@@ -713,10 +738,10 @@ async function processFile(id, file){
           })
         });
         const data=await r.json();
-        if(data.error){lastErr=data.error.message;continue;}
+        if(data.error){lastErr='['+model+'] '+data.error.message;console.log('Model failed:',model,data.error);continue;}
         if(!data.candidates||!data.candidates[0]){lastErr='No response';continue;}
         text=data.candidates[0].content.parts[0].text.trim().replace(/```json|```/g,'').trim();
-        if(text)break;
+        if(text){console.log('Success with model:',model);break;}
       }catch(e){lastErr=e.message;continue;}
     }
     if(!text)throw new Error('Gemini error: '+lastErr+'. API key check karo (Settings tab).');
