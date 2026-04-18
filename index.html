@@ -498,18 +498,24 @@ firebase.database().ref('.info/connected').on('value',snap=>{
   document.getElementById('syncDot').className='sync-dot'+(ok?'':' off');
   document.getElementById('syncText').textContent=ok?'🟢 Live':'🔴 Offline';
 });
-db.ref('bills').on('value',snap=>{
+try{ db.ref('bills').on('value',snap=>{
   bills=snap.val()||{};renderList();
   const c=Object.keys(bills).length;
   document.getElementById('billCount').textContent=c?'('+c+' bills)':'';
-});
+}); } catch(e){ console.warn('Bills listener error:',e); }
 db.ref('parties').on('value',snap=>{parties=snap.val()||{};renderPartySelect();renderParties();});
 db.ref('companies').on('value',snap=>{companies=snap.val()||{};renderCompanySelect();renderCompanies();});
 db.ref('settings/logo').on('value',snap=>{if(snap.val()){logoData=snap.val();setLogoPreview(logoData);}});
 // No API key needed - using Tesseract OCR
 claudeApiKey='';
 
-document.getElementById('loadingOverlay').style.display='none';
+// Hide loading overlay immediately - don't wait for Firebase
+const loadEl = document.getElementById('loadingOverlay');
+if(loadEl) loadEl.style.display='none';
+
+// Safety timeout - force hide after 2 sec no matter what
+setTimeout(()=>{ if(loadEl) loadEl.style.display='none'; }, 2000);
+
 initForm();
 restoreLastFields();
 
