@@ -158,8 +158,8 @@ table.btbl td input:focus{outline:none;}
 .select-row label{display:block;margin-bottom:5px;}
 
 /* LOADING */
-.loading{position:fixed;inset:0;background:rgba(26,26,46,0.88);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;color:white;}
-.spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,0.2);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:14px;}
+/* spinner for proc items only */
+.spinner{width:28px;height:28px;border:3px solid rgba(0,0,0,0.1);border-top-color:#1a1a2e;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 10px;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .toast{position:fixed;bottom:20px;right:20px;background:#1a1a2e;color:white;padding:11px 18px;border-radius:9px;font-size:13px;font-weight:600;opacity:0;transform:translateY(10px);transition:all 0.25s;pointer-events:none;z-index:9998;max-width:300px;box-shadow:0 4px 20px rgba(0,0,0,0.25);}
 .toast.show{opacity:1;transform:translateY(0);}
@@ -179,11 +179,7 @@ table.btbl td input:focus{outline:none;}
 </head>
 <body>
 
-<div class="loading" id="loadingOverlay">
-  <div class="spinner"></div>
-  <div style="font-size:15px;font-weight:600;">ARSH Logistics</div>
-  <div style="font-size:12px;opacity:0.6;margin-top:5px;">Connecting...</div>
-</div>
+
 
 <div class="app">
   <!-- TOPBAR -->
@@ -490,32 +486,37 @@ let claudeApiKey='';
 let currentScanMode='lr'; // 'lr' or 'invoice'
 let scanFiles=[], scanResults=[];
 
-firebase.initializeApp(FIREBASE_CONFIG);
-db=firebase.database();
+try {
+  firebase.initializeApp(FIREBASE_CONFIG);
+  db=firebase.database();
 
-firebase.database().ref('.info/connected').on('value',snap=>{
-  const ok=snap.val()===true;
-  document.getElementById('syncDot').className='sync-dot'+(ok?'':' off');
-  document.getElementById('syncText').textContent=ok?'🟢 Live':'🔴 Offline';
-});
-try{ db.ref('bills').on('value',snap=>{
-  bills=snap.val()||{};renderList();
+  firebase.database().ref('.info/connected').on('value',snap=>{
+    const ok=snap.val()===true;
+    document.getElementById('syncDot').className='sync-dot'+(ok?'':' off');
+    document.getElementById('syncText').textContent=ok?'🟢 Live':'🔴 Offline';
+  });
+} catch(e){
+  console.error('Firebase init error:',e);
+  document.getElementById('syncText').textContent='⚠️ DB Error';
+}
+// Safe Firebase listeners - won't block UI if DB fails
+function safeDbListen(path, cb){
+  if(!db){ console.warn('DB not ready for:',path); return; }
+  try{ db.ref(path).on('value', snap=>{ try{ cb(snap); }catch(e){ console.warn('Listener cb error:',e); } }); }
+  catch(e){ console.warn('DB listen error:',path,e); }
+}
+
+safeDbListen('bills', snap=>{
+  bills=snap.val()||{}; renderList();
   const c=Object.keys(bills).length;
   document.getElementById('billCount').textContent=c?'('+c+' bills)':'';
-}); } catch(e){ console.warn('Bills listener error:',e); }
-db.ref('parties').on('value',snap=>{parties=snap.val()||{};renderPartySelect();renderParties();});
-db.ref('companies').on('value',snap=>{companies=snap.val()||{};renderCompanySelect();renderCompanies();});
-db.ref('settings/logo').on('value',snap=>{if(snap.val()){logoData=snap.val();setLogoPreview(logoData);}});
-// No API key needed - using Tesseract OCR
+});
+safeDbListen('parties', snap=>{ parties=snap.val()||{}; renderPartySelect(); renderParties(); });
+safeDbListen('companies', snap=>{ companies=snap.val()||{}; renderCompanySelect(); renderCompanies(); });
+safeDbListen('settings/logo', snap=>{ if(snap&&snap.val()){ logoData=snap.val(); setLogoPreview(logoData); } });
 claudeApiKey='';
 
 // Hide loading overlay immediately - don't wait for Firebase
-const loadEl = document.getElementById('loadingOverlay');
-if(loadEl) loadEl.style.display='none';
-
-// Safety timeout - force hide after 2 sec no matter what
-setTimeout(()=>{ if(loadEl) loadEl.style.display='none'; }, 2000);
-
 initForm();
 restoreLastFields();
 
@@ -1081,6 +1082,7 @@ function closeModal(id){document.getElementById(id).classList.remove('open');doc
 async function saveParty(){
   const name=document.getElementById('mPName').value.trim();
   if(!name){toast('Party naam zaroori hai!',true);return;}
+  if(!db){toast('Database connect nahi hai!',true);return;}
   const ref=db.ref('parties').push();
   await ref.set({id:ref.key,name,gstin:document.getElementById('mPGstin').value,phone:document.getElementById('mPPhone').value,addr:document.getElementById('mPAddr').value,createdAt:Date.now()});
   closeModal('partyModal');toast('Party save: '+name+' ✅');
@@ -1110,6 +1112,7 @@ function renderParties(){
 async function saveCompanyDB(){
   const name=document.getElementById('mCName').value.trim();
   if(!name){toast('Company naam zaroori hai!',true);return;}
+  if(!db){toast('Database connect nahi hai!',true);return;}
   const ref=db.ref('companies').push();
   await ref.set({id:ref.key,name,pan:document.getElementById('mCPAN').value,gstin:document.getElementById('mCGSTIN').value,addr:document.getElementById('mCAddr').value,state:document.getElementById('mCState').value,email:document.getElementById('mCEmail').value,accName:document.getElementById('mCAccName').value,accNo:document.getElementById('mCAccNo').value,ifsc:document.getElementById('mCIFSC').value,bank:document.getElementById('mCBank').value,createdAt:Date.now()});
   closeModal('companyModal');toast('Company save: '+name+' ✅');
@@ -1193,6 +1196,7 @@ function getBillData(){
 }
 async function saveBill(){
   const b=getBillData();if(!b.partyName){toast('Party naam zaroori hai!',true);return;}
+  if(!db){toast('Database connect nahi hai! Page reload karo.',true);return;}
   const ref=db.ref('bills').push();await ref.set({...b,id:ref.key});
   toast('Invoice save & sync! ✅');clearForm();
 }
