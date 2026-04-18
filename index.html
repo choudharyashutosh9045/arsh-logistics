@@ -731,60 +731,132 @@ async function pdfToImage(file){
 }
 
 function parseLRText(text){
-  const t = text.replace(/\s+/g,' ');
-  const find = (patterns) => {
+  // Clean text - normalize spaces and lines
+  const lines = text.split(/\n/).map(l=>l.trim()).filter(l=>l.length>0);
+  const t = text.replace(/\r/g,'').replace(/[ \t]+/g,' ');
+  
+  // Helper: find value using multiple regex patterns
+  const find = (...patterns) => {
     for(const p of patterns){
       const m = t.match(p);
-      if(m && m[1] && m[1].trim()) return m[1].trim();
+      if(m){
+        const val = (m[2]||m[1]||'').trim().replace(/^[:\s]+/,'').trim();
+        if(val && val.length > 0) return val;
+      }
     }
     return '';
   };
-  return {
-    lrNo:     find([/LR[\s.#:-]*No[\s.:-]*([A-Z0-9\/\-]+)/i, /Consignment[\s]+No[\s.:-]*([A-Z0-9\/\-]+)/i, /C\.N[\s.:-]*([A-Z0-9\/\-]+)/i]),
-    lrDate:   find([/(\d{2}[\/\-]\d{2}[\/\-]\d{4})/, /(\d{4}[\/\-]\d{2}[\/\-]\d{2})/]),
-    truckNo:  find([/(?:Vehicle|Truck|Lorry|Veh)[\s.#:-]*(?:No|Number)?[\s.:-]*([A-Z]{2}\d{2}[A-Z]{1,2}\d{4})/i, /([A-Z]{2}\d{2}[A-Z]{1,2}\d{4})/]),
-    fromLoc:  find([/(?:From|Origin|Consignor\s+City|Loading\s+at)[\s.:-]*([A-Za-z]+(?:\s[A-Za-z]+)?)/i]),
-    destination: find([/(?:To|Destination|Consignee\s+City|Delivery\s+at)[\s.:-]*([A-Za-z]+(?:\s[A-Za-z]+)?)/i]),
-    consignorName: find([/(?:Consignor|Shipper|Sender)[\s.:-]*([A-Za-z](?:[A-Za-z0-9\s&.,()-]{3,60})?)(?=\n|GSTIN|Phone|Address)/i]),
-    consigneeName: find([/(?:Consignee|Receiver|Deliver\s+to)[\s.:-]*([A-Za-z](?:[A-Za-z0-9\s&.,()-]{3,60})?)(?=\n|GSTIN|Phone|Address)/i]),
-    consigneeGSTIN: find([/GSTIN[\s.:-]*([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1})/i]),
-    consigneeAddr: find([/(?:Address|Addr)[\s.:-]*([^\n]{10,80})/i]),
-    pkgs:     find([/(?:Pkgs|Packages|Nos|Pieces)[\s.:-]*(\d+)/i]),
-    weight:   find([/(?:Weight|Wt|Kgs?)[\s.:-]*(\d+(?:\.\d+)?)/i]),
-    truckType: find([/(\d+\s*(?:FT|FEET|Tonne|Ton|Wheeler))/i]),
-    freight:  find([/(?:Freight|Freight\s+Charges?)[\s.:₹Rs-]*(\d+(?:,\d+)*(?:\.\d+)?)/i]),
-    toPoint:  find([/(?:To\s+Point|Delivery\s+Charges?)[\s.:₹Rs-]*(\d+(?:,\d+)*(?:\.\d+)?)/i]),
-    unloading: find([/(?:Unload|Unloading)[\s.:₹Rs-]*(\d+(?:,\d+)*(?:\.\d+)?)/i]),
-  };
+
+  // LR Number - most important field
+  const lrNo = find(
+    /(?:L\.?R\.?\s*No\.?|Lorry\s*Receipt\s*No\.?|Consignment\s*No\.?|C\.?N\.?\s*No\.?)\s*[:\-]?\s*([A-Z0-9\-\/]+)/i,
+    /LR[\s#.:-]*([A-Z0-9\-\/]{3,20})/i,
+    /(?:No|Number)[\s.:-]+([A-Z0-9\-\/]{4,20})/i
+  );
+
+  // Date
+  const lrDate = find(
+    /(\d{2}[\/\-]\d{2}[\/\-]\d{4})/,
+    /(\d{4}[\/\-]\d{2}[\/\-]\d{2})/,
+    /(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4})/i
+  );
+
+  // Vehicle number - Indian format
+  const truckNo = find(
+    /([A-Z]{2}\s*\d{2}\s*[A-Z]{1,2}\s*\d{4})/,
+    /(?:Vehicle|Truck|Veh|GV)[\s.#:-]*(?:No\.?)?\s*([A-Z]{2}[\s-]*\d{2}[\s-]*[A-Z]{1,3}[\s-]*\d{4})/i
+  );
+
+  // From / To locations
+  const fromLoc = find(
+    /(?:From|Origin|Consignor\s*City|F(?:rom)?)[\s.:-]+([A-Za-z][A-Za-z\s]{2,25}?)(?=\s*(?:To|Destination|\n))/i,
+    /(?:Loading|Pickup)\s*(?:Point|At|:)[\s.:-]*([A-Za-z][A-Za-z\s]{2,20})/i
+  );
+
+  const destination = find(
+    /(?:To|Destination|Consignee\s*City|Delivery)[\s.:-]+([A-Za-z][A-Za-z\s]{2,25}?)(?=\s*(?:\n|GSTIN|$))/i,
+    /(?:Unloading|Delivery\s*At)[\s.:-]*([A-Za-z][A-Za-z\s]{2,20})/i
+  );
+
+  // Company names
+  const consignorName = find(
+    /(?:Consignor|Shipper|Sender|From\s*Party)[\s.:-]+([A-Za-z][\w\s&.,()-]{3,50}?)(?=\s*(?:\n|GSTIN|Address|Phone))/i
+  );
+  const consigneeName = find(
+    /(?:Consignee|Receiver|Deliver\s*To)[\s.:-]+([A-Za-z][\w\s&.,()-]{3,50}?)(?=\s*(?:\n|GSTIN|Address|Phone))/i
+  );
+
+  // GSTIN
+  const gstin = text.match(/\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]/);
+  const consigneeGSTIN = gstin ? gstin[0] : '';
+
+  // Numbers
+  const pkgs = find(/(?:Pkgs?|Packages?|Nos?\.?|Pieces?|Boxes?)[\s.:-]*(\d+)/i);
+  const weight = find(/(?:Actual\s*)?(?:Weight|Wt\.?|Kgs?)[\s.:-]*(\d+(?:\.\d+)?)/i);
+  const truckType = find(/(\d+\s*(?:FT|FEET|Ton(?:ne)?|Wheeler))/i);
+  const freight = find(/(?:Freight|Freight\s*Charges?|Basic\s*Freight)[\s.:₹Rs-]*(\d[\d,]*(?:\.\d+)?)/i);
+
+  return {lrNo, lrDate, truckNo, fromLoc, destination, consignorName, consigneeName, consigneeGSTIN, consigneeAddr:'', pkgs, weight, truckType, freight, toPoint:'', unloading:''};
 }
 
 function parseInvoiceText(text){
-  const t = text.replace(/\s+/g,' ');
-  const find = (patterns) => {
+  const t = text.replace(/\r/g,'').replace(/[ \t]+/g,' ');
+  
+  const find = (...patterns) => {
     for(const p of patterns){
       const m = t.match(p);
-      if(m && m[1] && m[1].trim()) return m[1].trim();
+      if(m){
+        const val = (m[2]||m[1]||'').trim().replace(/^[:\s]+/,'').trim();
+        if(val && val.length > 0) return val;
+      }
     }
     return '';
   };
-  return {
-    invoiceNo:   find([/Invoice[\s.#:-]*No[\s.:-]*([A-Z0-9\/\-]+)/i, /Bill[\s.#:-]*No[\s.:-]*([A-Z0-9\/\-]+)/i]),
-    invoiceDate: find([/(\d{2}[\/\-]\d{2}[\/\-]\d{4})/, /(\d{4}[\/\-]\d{2}[\/\-]\d{2})/]),
-    sellerName:  find([/(?:Seller|Supplier|From|Sold\s+by)[\s.:-]*([A-Za-z][\w\s&.,()-]{3,60}?)(?=\n|GSTIN|PAN)/i]),
-    sellerGSTIN: find([/(?:Seller|Our|Supplier)[^\n]*GSTIN[\s.:-]*([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z])/i, /GSTIN[\s.:-]*([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z])/i]),
-    sellerAddr:  find([/(?:Seller|Supplier|From)[\s\S]{0,30}(?:Address|Addr)[\s.:-]*([^\n]{10,80})/i]),
-    sellerPAN:   find([/PAN[\s.:-]*([A-Z]{5}\d{4}[A-Z])/i]),
-    buyerName:   find([/(?:Buyer|Bill\s+to|Ship\s+to|Consignee)[\s.:-]*([A-Za-z][\w\s&.,()-]{3,60}?)(?=\n|GSTIN)/i]),
-    buyerGSTIN:  find([/(?:Buyer|Consignee)[^\n]*GSTIN[\s.:-]*([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z])/i]),
-    buyerAddr:   find([/(?:Buyer|Ship\s+to)[\s\S]{0,30}(?:Address|Addr)[\s.:-]*([^\n]{10,80})/i]),
-    totalAmount: find([/(?:Total|Grand\s+Total|Net\s+Amount)[\s.:₹Rs*-]*(\d+(?:,\d+)*(?:\.\d+)?)/i]),
-    pkgs:        find([/(?:Pkgs|Packages|Boxes|Cartons)[\s.:-]*(\d+)/i]),
-    weight:      find([/(?:Weight|Wt|Kgs?)[\s.:-]*(\d+(?:\.\d+)?)/i]),
-    description: find([/(?:Description|Goods|Items?|Product)[\s.:-]*([^\n]{5,60})/i]),
-  };
+
+  // Invoice number - multiple patterns
+  const invoiceNo = find(
+    /(?:Invoice|Bill|Inv)[\s.#:-]*(?:No\.?|Number)[\s.:-]*([A-Za-z0-9\-\/]{2,30})/i,
+    /(?:Tax\s*Invoice|GST\s*Invoice)[\s.#:-]*(?:No\.?)?[\s.:-]*([A-Za-z0-9\-\/]{2,30})/i,
+    /(?:^|\n)(?:No|#)[\s.:-]*([A-Za-z0-9\-\/]{3,20})/im
+  );
+
+  // Date
+  const invoiceDate = find(
+    /(\d{2}[\/\-]\d{2}[\/\-]\d{4})/,
+    /(\d{4}[\/\-]\d{2}[\/\-]\d{2})/,
+    /(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4})/i
+  );
+
+  // Seller/Buyer names
+  const sellerName = find(
+    /(?:Seller|Supplier|Manufactured\s*by|Sold\s*by|From)[\s.:-]+([A-Za-z][\w\s&.,()-]{3,60}?)(?=\s*(?:\n|GSTIN|PAN|Address))/i
+  );
+  const buyerName = find(
+    /(?:Buyer|Bill\s*To|Ship\s*To|Consignee|To)[\s.:-]+([A-Za-z][\w\s&.,()-]{3,60}?)(?=\s*(?:\n|GSTIN|Address|Phone))/i
+  );
+
+  // GSTINs - find all, first = seller, second = buyer usually
+  const allGSTIN = text.match(/\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]/g) || [];
+  const sellerGSTIN = allGSTIN[0] || '';
+  const buyerGSTIN = allGSTIN[1] || '';
+
+  // PAN
+  const sellerPAN = find(/PAN[\s.:-]*([A-Z]{5}\d{4}[A-Z])/i);
+
+  // Amount - look for total/grand total
+  const totalAmount = find(
+    /(?:Grand\s*Total|Total\s*Amount|Net\s*(?:Payable|Amount)|Total\s*(?:Rs|₹|INR))[\s.:₹Rs*-]*(\d[\d,]*(?:\.\d+)?)/i,
+    /(?:^|\n)Total[\s.:₹Rs*-]*(\d[\d,]*(?:\.\d+)?)(?=\s*(?:\n|$))/im
+  );
+
+  const pkgs = find(/(?:Pkgs?|Packages?|Boxes?|Cartons?|Qty)[\s.:-]*(\d+)/i);
+  const weight = find(/(?:Net\s*)?(?:Weight|Wt\.?|Kgs?)[\s.:-]*(\d+(?:\.\d+)?)/i);
+  const description = find(/(?:Description\s*of\s*Goods?|Item|Product|Material)[\s.:-]*([^\n]{5,50})/i);
+
+  return {invoiceNo, invoiceDate, sellerName, sellerGSTIN, sellerPAN, sellerAddr:'', buyerName, buyerGSTIN, buyerAddr:'', totalAmount, pkgs, weight, description};
 }
 
-function getLRPrompt(){
+function getLRPrompt(){function getLRPrompt(){
   return `This is a transport LR (Lorry Receipt) document. Extract these fields and return ONLY valid JSON (no markdown):
 {
   "lrNo": "LR number from this document",
@@ -852,70 +924,80 @@ function renderResults(){
   const container=document.getElementById('resultsContainer');
 
   if(currentScanMode==='lr'){
-    // Single LR result
+    // LR mode - show only LR number prominently + other details
     const r=scanResults[0].data;
-    container.innerHTML=`<div class="extracted-card">
-      <div class="extracted-header">
-        <span style="font-weight:700;font-size:13px;">📋 LR Data</span>
-        <span class="extracted-badge">LR Document</span>
+    const lrNo = r.lrNo || '(LR No. nahi mila - manually bharo)';
+    container.innerHTML=`
+      <div style="background:#1a1a2e;border-radius:10px;padding:16px 20px;margin-bottom:14px;text-align:center;">
+        <div style="color:rgba(255,255,255,0.6);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">LR Number</div>
+        <div style="color:white;font-size:28px;font-weight:700;letter-spacing:0.05em;">${lrNo}</div>
       </div>
-      <div class="extracted-grid">
-        ${lrField('lrNo','LR Number',r)}
-        ${lrField('lrDate','LR Date',r)}
-        ${lrField('truckNo','Truck No',r)}
-        ${lrField('fromLoc','From Location',r)}
-        ${lrField('destination','Destination',r)}
-        ${lrField('consignorName','Consignor Name',r)}
-        ${lrField('consigneeName','Consignee Name',r)}
-        ${lrField('consigneeGSTIN','Consignee GSTIN',r)}
-        ${lrField('consigneeAddr','Consignee Address',r)}
-        ${lrField('pkgs','Packages',r)}
-        ${lrField('weight','Weight (Kg)',r)}
-        ${lrField('truckType','Truck Type',r)}
-        ${lrField('freight','Freight (Rs.)',r)}
-        ${lrField('toPoint','To Point (Rs.)',r)}
-        ${lrField('unloading','Unloading (Rs.)',r)}
-      </div>
-    </div>`;
+      <div class="extracted-grid" style="margin-bottom:10px;">
+        ${lrFieldNew('lrNo','LR Number',r)}
+        ${lrFieldNew('lrDate','Tarikh',r)}
+        ${lrFieldNew('truckNo','Truck No',r)}
+        ${lrFieldNew('fromLoc','From (Kahan Se)',r)}
+        ${lrFieldNew('destination','To (Kahan Ko)',r)}
+        ${lrFieldNew('consignorName','Consignor Name',r)}
+        ${lrFieldNew('consigneeName','Consignee Name',r)}
+        ${lrFieldNew('consigneeGSTIN','Consignee GSTIN',r)}
+        ${lrFieldNew('pkgs','Packages',r)}
+        ${lrFieldNew('weight','Weight (Kg)',r)}
+        ${lrFieldNew('truckType','Truck Type',r)}
+        ${lrFieldNew('freight','Freight (Rs.)',r)}
+      </div>`;
   } else {
-    // Multiple invoices — each shown separately
-    container.innerHTML=scanResults.map((res,idx)=>`
+    // Invoice mode - collect ALL invoice numbers in one line
+    const allInvNos = scanResults.map((res,i)=>{
+      return res.data.invoiceNo || String(i+1);
+    }).filter(n=>n).join(', ');
+
+    container.innerHTML=`
+      <div style="background:#1a1a2e;border-radius:10px;padding:16px 20px;margin-bottom:14px;">
+        <div style="color:rgba(255,255,255,0.6);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Saare Invoice Numbers (${scanResults.length} invoice${scanResults.length>1?'s':''})</div>
+        <div style="color:white;font-size:18px;font-weight:700;">${allInvNos||'Invoice no. nahi mila'}</div>
+      </div>
+      ${scanResults.map((res,idx)=>`
       <div class="extracted-card" style="margin-bottom:10px;">
         <div class="extracted-header">
           <span style="font-weight:700;font-size:13px;">🧾 Invoice ${idx+1}: ${res.name.length>30?res.name.substr(0,27)+'...':res.name}</span>
           <span class="extracted-badge">Invoice #${idx+1}</span>
         </div>
         <div class="extracted-grid">
-          ${invField('invoiceNo','Invoice No',res.data,res.id)}
-          ${invField('invoiceDate','Invoice Date',res.data,res.id)}
-          ${invField('sellerName','Seller Name',res.data,res.id)}
-          ${invField('sellerGSTIN','Seller GSTIN',res.data,res.id)}
-          ${invField('buyerName','Buyer Name',res.data,res.id)}
-          ${invField('buyerGSTIN','Buyer GSTIN',res.data,res.id)}
-          ${invField('totalAmount','Total Amount (Rs.)',res.data,res.id)}
-          ${invField('pkgs','Packages',res.data,res.id)}
-          ${invField('weight','Weight (Kg)',res.data,res.id)}
-          ${invField('description','Goods Description',res.data,res.id)}
+          ${invFieldNew('invoiceNo','Invoice No',res.data,res.id)}
+          ${invFieldNew('invoiceDate','Invoice Date',res.data,res.id)}
+          ${invFieldNew('sellerName','Seller Name',res.data,res.id)}
+          ${invFieldNew('sellerGSTIN','Seller GSTIN',res.data,res.id)}
+          ${invFieldNew('sellerPAN','Seller PAN',res.data,res.id)}
+          ${invFieldNew('buyerName','Buyer Name',res.data,res.id)}
+          ${invFieldNew('buyerGSTIN','Buyer GSTIN',res.data,res.id)}
+          ${invFieldNew('totalAmount','Total Amount (Rs.)',res.data,res.id)}
+          ${invFieldNew('pkgs','Packages',res.data,res.id)}
+          ${invFieldNew('weight','Weight (Kg)',res.data,res.id)}
+          ${invFieldNew('description','Goods',res.data,res.id)}
         </div>
-      </div>`).join('');
+      </div>`).join('')}`;
   }
 }
 
-function lrField(key,label,data){
+function lrFieldNew(key,label,data){
   const v=data[key]||'';
   return `<div class="ext-field">
     <span class="ext-label">${label}</span>
-    <input class="ext-input ${v?'filled':''}" value="${v}" oninput="updateScanResult(0,'${key}',this.value)" data-key="${key}"/>
+    <input class="ext-input ${v?'filled':''}" value="${v.toString().replace(/"/g,'&quot;')}" oninput="if(scanResults[0])scanResults[0].data['${key}']=this.value"/>
   </div>`;
 }
-function invField(key,label,data,id){
+function invFieldNew(key,label,data,id){
   const v=data[key]||'';
   const ri=scanResults.findIndex(r=>r.id===id);
   return `<div class="ext-field">
     <span class="ext-label">${label}</span>
-    <input class="ext-input ${v?'filled':''}" value="${v}" oninput="updateScanResultById('${id}','${key}',this.value)"/>
+    <input class="ext-input ${v?'filled':''}" value="${v.toString().replace(/"/g,'&quot;')}" oninput="updateScanResultById('${id}','${key}',this.value)"/>
   </div>`;
 }
+
+
+// lrField and invField replaced by lrFieldNew and invFieldNew
 function updateScanResult(idx,key,val){ if(scanResults[idx]) scanResults[idx].data[key]=val; }
 function updateScanResultById(id,key,val){ const r=scanResults.find(r=>r.id===id); if(r) r.data[key]=val; }
 
@@ -957,26 +1039,28 @@ function fillFormFromScan(){
     if(first.sellerPAN) set('fcPAN',first.sellerPAN);
     if(first.sellerAddr) set('fcAddr',first.sellerAddr);
 
-    // Each invoice → one shipment row, invoice nos numbered 1,2,3...
-    rows=scanResults.map((res,idx)=>({
+    // All invoice numbers in ONE combined field, one row per invoice
+    // Invoice numbers: 1, 2, 3 as per sequence
+    rows=scanResults.map((res,i)=>({
       date:res.data.invoiceDate||today,
-      lr:'', dest:'',
+      lr:'',
+      dest:'',
       cn:'',
       truck:'',
-      invNo:res.data.invoiceNo||String(idx+1),
+      invNo: res.data.invoiceNo || String(i+1),
       pkgs:res.data.pkgs||'',
       wt:res.data.weight||'',
       arrival:res.data.invoiceDate||today,
       delivery:res.data.invoiceDate||today,
       truckType:'',
-      freight:0,
+      freight:parseFloat((res.data.totalAmount||'').toString().replace(/,/g,''))||0,
       toPoint:0,
       unload:0,
       srcDet:0,
       dstDet:0
     }));
     renderRows();
-    toast(scanResults.length+' invoices form mein aa gaye! ✅');
+    toast(scanResults.length+' invoice(s) form mein aa gaye! ✅');
   }
   switchTab('new');
 }
