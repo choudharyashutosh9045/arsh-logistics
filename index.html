@@ -230,10 +230,7 @@ table.btbl td input:focus{outline:none;}
 
   <!-- ═══ SCAN TAB ═══ -->
   <div id="tab-scan" class="section">
-    <div id="apiKeyAlert" class="api-alert" style="display:none!important;">
-      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-      <div><b>Google Gemini API Key set nahi hai!</b> Settings tab mein jaao → Free API Key daalo → Save karo.</div>
-    </div>
+    
 
     <!-- LR / Invoice Sub-tabs -->
     <div class="scan-tabs">
@@ -558,13 +555,8 @@ function initForm(){
 // API KEY
 // ══════════════════════════════════════════
 async function saveApiKey(){
-  const key=document.getElementById('apiKeyInput').value.trim();
-  if(!key||key.length<10){toast('Valid API key daalo!',true);return;}
-  await db.ref('settings/apiKey').set(key);
-  await db.ref('settings/workingModel').set('');
-  claudeApiKey=key;
-  document.getElementById('apiKeyAlert').style.display='none';
-  toast('✅ API Key save ho gayi! Ab scan karo.',false,3000);
+  // Not needed anymore - using Tesseract OCR
+  toast('✅ Koi API Key nahi chahiye! Seedha Scan karo.',false,3000);
 }
 
 // ══════════════════════════════════════════
@@ -616,7 +608,7 @@ function handleDrop(e){e.preventDefault();e.currentTarget.classList.remove('drag
 function openCamera(){const i=document.createElement('input');i.type='file';i.accept='image/*';i.capture='environment';i.onchange=e=>handleFiles(e.target.files);i.click();}
 
 function handleFiles(fileList){
-  if(!claudeApiKey){toast('Pehle Settings mein API Key daalo!',true);switchTab('settings');return;}
+  // No API key needed - Tesseract OCR is used
   const files=Array.from(fileList);
   // For LR mode, only 1 file; for invoice mode, multiple allowed
   const toProcess = currentScanMode==='lr' ? files.slice(0,1) : files;
