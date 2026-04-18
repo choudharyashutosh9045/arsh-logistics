@@ -26,12 +26,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script>
-  // Set PDF.js worker
-  if(typeof pdfjsLib !== 'undefined') {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  }
-</script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#1a1a2e;min-height:100vh;}
@@ -235,7 +230,7 @@ table.btbl td input:focus{outline:none;}
 
   <!-- ═══ SCAN TAB ═══ -->
   <div id="tab-scan" class="section">
-    <div id="apiKeyAlert" class="api-alert" style="display:none;">
+    <div id="apiKeyAlert" class="api-alert" style="display:none!important;">
       <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
       <div><b>Google Gemini API Key set nahi hai!</b> Settings tab mein jaao → Free API Key daalo → Save karo.</div>
     </div>
@@ -424,30 +419,16 @@ table.btbl td input:focus{outline:none;}
   <div id="tab-settings" class="section">
     <!-- API KEY -->
     <div class="card">
-      <div class="card-title">🤖 Google Gemini API Key (FREE - Scan ke liye zaroori)</div>
-      <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;color:#9a3412;">
-        ✅ <b>Gemini API bilkul FREE hai!</b><br><br>
-        Key kaise lo:<br>
-        1️⃣ <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#1a1a2e;font-weight:700;">aistudio.google.com/apikey</a> kholo<br>
-        2️⃣ Google se login karo<br>
-        3️⃣ <b>"Create API key"</b> click karo<br>
-        4️⃣ Key copy karo (<b>AIzaSy...</b> se shuru hogi)<br>
-        5️⃣ Neeche paste karo → Save karo
+      <div class="card-title">🤖 AI Scan — Koi API Key Nahi Chahiye!</div>
+      <div style="background:#f0fff8;border:1px solid #bbf7d0;border-radius:8px;padding:14px;font-size:13px;color:#065f46;">
+        ✅ <b>Ab koi API Key nahi chahiye!</b><br><br>
+        Tesseract OCR use ho raha hai jo bilkul FREE hai!<br>
+        Browser mein hi chalta hai — koi server, koi payment nahi.<br>
+        PDF aur Image dono support.<br><br>
+        <b>Seedha Scan tab pe jaao aur document upload karo! 🎉</b>
       </div>
-      <div class="fg" style="margin-bottom:10px;">
-        <label>Claude API Key</label>
-        <input type="password" id="apiKeyInput" placeholder="AIzaSy... (aistudio.google.com se lo)" />
-      </div>
-      <button class="btn btn-dark" onclick="saveApiKey()">🔑 API Key Save Karo</button>
-    </div>
-
-    <!-- LOGO -->
-    <div class="card">
-      <div class="card-title">Company Logo</div>
-      <div class="logo-upload-area" onclick="document.getElementById('logoInput2').click()">
-        <input type="file" id="logoInput2" accept="image/*" onchange="uploadLogo(this)">
-        <img id="logoImg2" src="" style="display:none;max-height:70px;max-width:200px;object-fit:contain;margin:0 auto 8px;">
-        <div id="logoHint"><div style="font-size:13px;font-weight:600;color:#6b7280;margin-bottom:4px;">📁 Logo Upload Karo</div><div style="font-size:12px;color:#9ca3af;">PNG, JPG • PDF mein print hoga</div></div>
+      <div style="margin-top:12px;">
+        <button class="btn btn-dark" onclick="switchTab('scan')">📷 Scan Karo Abhi →</button>
       </div>
     </div>
 
@@ -528,16 +509,8 @@ db.ref('bills').on('value',snap=>{
 db.ref('parties').on('value',snap=>{parties=snap.val()||{};renderPartySelect();renderParties();});
 db.ref('companies').on('value',snap=>{companies=snap.val()||{};renderCompanySelect();renderCompanies();});
 db.ref('settings/logo').on('value',snap=>{if(snap.val()){logoData=snap.val();setLogoPreview(logoData);}});
-db.ref('settings/apiKey').on('value',snap=>{
-  if(snap.val()){
-    claudeApiKey=snap.val();
-    document.getElementById('apiKeyAlert').style.display='none';
-    const inp=document.getElementById('apiKeyInput');
-    if(inp)inp.value='sk-ant-....(saved)';
-  } else {
-    document.getElementById('apiKeyAlert').style.display='flex';
-  }
-});
+// No API key needed - using Tesseract OCR
+claudeApiKey='';
 
 document.getElementById('loadingOverlay').style.display='none';
 initForm();
@@ -689,60 +662,38 @@ function clearAllScans(){
 // ══════════════════════════════════════════
 async function processFile(id, file){
   document.getElementById('processingCard').style.display='block';
-  updateProcItem(id,'processing','File read ho rahi hai...');
+  updateProcItem(id,'processing','File pad raha hai...');
   try{
-    if(!claudeApiKey){throw new Error('API Key set nahi hai! Settings tab mein jaao aur Gemini key save karo.');}
-
-    // Convert to image (handle PDF)
-    let base64, mime;
+    let imageUrl;
     if(file.type==='application/pdf'){
-      updateProcItem(id,'processing','PDF convert ho rahi hai...');
+      updateProcItem(id,'processing','PDF convert ho raha hai...');
       const result=await pdfToImage(file);
-      base64=result.base64; mime='image/jpeg';
+      imageUrl=result.dataUrl;
     } else {
-      const dataUrl=await readFileAsDataUrl(file);
-      base64=dataUrl.split(',')[1]; mime=file.type||'image/jpeg';
+      imageUrl=await readFileAsDataUrl(file);
     }
-
-    updateProcItem(id,'processing','AI se data extract ho raha hai...');
-    const prompt=currentScanMode==='lr'?getLRPrompt():getInvoicePrompt();
-
-    // Try Gemini models in order
-    const models=[
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
-      'gemini-1.5-flash-8b',
-      'gemini-1.5-pro'
-    ];
-    let text='', lastErr='';
-    for(const model of models){
-      try{
-        const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+claudeApiKey,{
-          method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            contents:[{parts:[{inline_data:{mime_type:mime,data:base64}},{text:prompt}]}],
-            generationConfig:{temperature:0.1,maxOutputTokens:1500}
-          })
-        });
-        const data=await r.json();
-        if(data.error){lastErr='['+model+'] '+data.error.message;console.log('Model failed:',model,data.error);continue;}
-        if(!data.candidates||!data.candidates[0]){lastErr='No response';continue;}
-        text=data.candidates[0].content.parts[0].text.trim().replace(/```json|```/g,'').trim();
-        if(text){console.log('Success with model:',model);break;}
-      }catch(e){lastErr=e.message;continue;}
-    }
-    if(!text)throw new Error('Gemini error: '+lastErr+'. API key check karo (Settings tab).');
-
-    const extracted=JSON.parse(text);
-    const fi=scanFiles.find(f=>f.id===id);if(fi){fi.status='done';fi.result=extracted;}
+    updateProcItem(id,'processing','Text scan ho raha hai...');
+    const worker = await Tesseract.createWorker('eng',1,{logger:m=>{
+      if(m.status==='recognizing text'){
+        updateProcItem(id,'processing','Scan: '+Math.round((m.progress||0)*100)+'%');
+      }
+    }});
+    const {data:{text:rawText}} = await worker.recognize(imageUrl);
+    await worker.terminate();
+    console.log('OCR raw text:', rawText);
+    updateProcItem(id,'processing','Data parse ho raha hai...');
+    const extracted = currentScanMode==='lr' ? parseLRText(rawText) : parseInvoiceText(rawText);
+    const fi=scanFiles.find(f=>f.id===id);
+    if(fi){fi.status='done';fi.result=extracted;}
     scanResults.push({id,name:file.name,data:extracted});
-    updateProcItem(id,'done','Data extract ho gaya! ✅');
+    updateProcItem(id,'done','Scan complete! ✅');
     renderFileChips(); renderResults();
   }catch(err){
-    const fi=scanFiles.find(f=>f.id===id);if(fi)fi.status='error';
-    updateProcItem(id,'error',err.message||'Error aaya, dobara try karo');
+    const fi=scanFiles.find(f=>f.id===id);
+    if(fi)fi.status='error';
+    updateProcItem(id,'error','Error: '+err.message);
     renderFileChips();
-    toast(err.message,true,6000);
+    toast('Error: '+err.message,true,5000);
   }
 }
 
@@ -785,6 +736,60 @@ async function pdfToImage(file){
       res({base64: dataUrl.split(',')[1], dataUrl});
     }catch(e){rej(e);}
   });
+}
+
+function parseLRText(text){
+  const t = text.replace(/\s+/g,' ');
+  const find = (patterns) => {
+    for(const p of patterns){
+      const m = t.match(p);
+      if(m && m[1] && m[1].trim()) return m[1].trim();
+    }
+    return '';
+  };
+  return {
+    lrNo:     find([/LR[\s.#:-]*No[\s.:-]*([A-Z0-9\/\-]+)/i, /Consignment[\s]+No[\s.:-]*([A-Z0-9\/\-]+)/i, /C\.N[\s.:-]*([A-Z0-9\/\-]+)/i]),
+    lrDate:   find([/(\d{2}[\/\-]\d{2}[\/\-]\d{4})/, /(\d{4}[\/\-]\d{2}[\/\-]\d{2})/]),
+    truckNo:  find([/(?:Vehicle|Truck|Lorry|Veh)[\s.#:-]*(?:No|Number)?[\s.:-]*([A-Z]{2}\d{2}[A-Z]{1,2}\d{4})/i, /([A-Z]{2}\d{2}[A-Z]{1,2}\d{4})/]),
+    fromLoc:  find([/(?:From|Origin|Consignor\s+City|Loading\s+at)[\s.:-]*([A-Za-z]+(?:\s[A-Za-z]+)?)/i]),
+    destination: find([/(?:To|Destination|Consignee\s+City|Delivery\s+at)[\s.:-]*([A-Za-z]+(?:\s[A-Za-z]+)?)/i]),
+    consignorName: find([/(?:Consignor|Shipper|Sender)[\s.:-]*([A-Za-z](?:[A-Za-z0-9\s&.,()-]{3,60})?)(?=\n|GSTIN|Phone|Address)/i]),
+    consigneeName: find([/(?:Consignee|Receiver|Deliver\s+to)[\s.:-]*([A-Za-z](?:[A-Za-z0-9\s&.,()-]{3,60})?)(?=\n|GSTIN|Phone|Address)/i]),
+    consigneeGSTIN: find([/GSTIN[\s.:-]*([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1})/i]),
+    consigneeAddr: find([/(?:Address|Addr)[\s.:-]*([^\n]{10,80})/i]),
+    pkgs:     find([/(?:Pkgs|Packages|Nos|Pieces)[\s.:-]*(\d+)/i]),
+    weight:   find([/(?:Weight|Wt|Kgs?)[\s.:-]*(\d+(?:\.\d+)?)/i]),
+    truckType: find([/(\d+\s*(?:FT|FEET|Tonne|Ton|Wheeler))/i]),
+    freight:  find([/(?:Freight|Freight\s+Charges?)[\s.:₹Rs-]*(\d+(?:,\d+)*(?:\.\d+)?)/i]),
+    toPoint:  find([/(?:To\s+Point|Delivery\s+Charges?)[\s.:₹Rs-]*(\d+(?:,\d+)*(?:\.\d+)?)/i]),
+    unloading: find([/(?:Unload|Unloading)[\s.:₹Rs-]*(\d+(?:,\d+)*(?:\.\d+)?)/i]),
+  };
+}
+
+function parseInvoiceText(text){
+  const t = text.replace(/\s+/g,' ');
+  const find = (patterns) => {
+    for(const p of patterns){
+      const m = t.match(p);
+      if(m && m[1] && m[1].trim()) return m[1].trim();
+    }
+    return '';
+  };
+  return {
+    invoiceNo:   find([/Invoice[\s.#:-]*No[\s.:-]*([A-Z0-9\/\-]+)/i, /Bill[\s.#:-]*No[\s.:-]*([A-Z0-9\/\-]+)/i]),
+    invoiceDate: find([/(\d{2}[\/\-]\d{2}[\/\-]\d{4})/, /(\d{4}[\/\-]\d{2}[\/\-]\d{2})/]),
+    sellerName:  find([/(?:Seller|Supplier|From|Sold\s+by)[\s.:-]*([A-Za-z][\w\s&.,()-]{3,60}?)(?=\n|GSTIN|PAN)/i]),
+    sellerGSTIN: find([/(?:Seller|Our|Supplier)[^\n]*GSTIN[\s.:-]*([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z])/i, /GSTIN[\s.:-]*([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z])/i]),
+    sellerAddr:  find([/(?:Seller|Supplier|From)[\s\S]{0,30}(?:Address|Addr)[\s.:-]*([^\n]{10,80})/i]),
+    sellerPAN:   find([/PAN[\s.:-]*([A-Z]{5}\d{4}[A-Z])/i]),
+    buyerName:   find([/(?:Buyer|Bill\s+to|Ship\s+to|Consignee)[\s.:-]*([A-Za-z][\w\s&.,()-]{3,60}?)(?=\n|GSTIN)/i]),
+    buyerGSTIN:  find([/(?:Buyer|Consignee)[^\n]*GSTIN[\s.:-]*([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z])/i]),
+    buyerAddr:   find([/(?:Buyer|Ship\s+to)[\s\S]{0,30}(?:Address|Addr)[\s.:-]*([^\n]{10,80})/i]),
+    totalAmount: find([/(?:Total|Grand\s+Total|Net\s+Amount)[\s.:₹Rs*-]*(\d+(?:,\d+)*(?:\.\d+)?)/i]),
+    pkgs:        find([/(?:Pkgs|Packages|Boxes|Cartons)[\s.:-]*(\d+)/i]),
+    weight:      find([/(?:Weight|Wt|Kgs?)[\s.:-]*(\d+(?:\.\d+)?)/i]),
+    description: find([/(?:Description|Goods|Items?|Product)[\s.:-]*([^\n]{5,60})/i]),
+  };
 }
 
 function getLRPrompt(){
