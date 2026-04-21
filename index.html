@@ -2,7 +2,13 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ARSH Logistics">
+<link rel="manifest" href="manifest.json">
 <title>ARSH Logistics – Billing System</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script>
@@ -153,7 +159,10 @@ table.sh td input{padding:4px 5px;font-size:11px;border-radius:5px;text-align:ce
     </div>
   </div>
   <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-    <div class="sync-badge"><span class="dot off" id="syncDot"></span><span id="syncTxt">Connecting...</span></div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="sync-badge"><span class="dot off" id="syncDot"></span><span id="syncTxt">Connecting...</span></div>
+      <button id="installBtn" onclick="installApp()" style="display:none;background:rgba(255,193,7,0.2);border:1px solid rgba(255,193,7,0.5);color:#ffc107;padding:6px 12px;border-radius:7px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:600;">📲 App Install Karo</button>
+    </div>
     <div class="nav-btns">
       <button class="nav-btn active" onclick="goTab('new')" id="nb-new">+ Invoice</button>
       <button class="nav-btn" onclick="goTab('list')" id="nb-list">Bills</button>
@@ -762,6 +771,38 @@ function makePDF(b){
 // ══════════════════
 // TOAST
 // ══════════════════
+// ══════════════════
+// PWA
+// ══════════════════
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  const btn=document.getElementById('installBtn');
+  if(btn)btn.style.display='inline-flex';
+});
+window.addEventListener('appinstalled',()=>{
+  const btn=document.getElementById('installBtn');
+  if(btn)btn.style.display='none';
+  toast('App install ho gayi! 🎉');
+});
+function installApp(){
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(()=>{
+    deferredPrompt=null;
+    const btn=document.getElementById('installBtn');
+    if(btn)btn.style.display='none';
+  });
+}
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(()=>console.log('SW registered'))
+      .catch(e=>console.log('SW error:',e));
+  });
+}
+
 function toast(msg,isErr=false,dur=2500){
   const t=document.getElementById('toast');t.textContent=msg;
   t.style.background=isErr?'#dc2626':'#1a1a2e';
