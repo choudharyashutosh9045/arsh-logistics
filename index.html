@@ -1,820 +1,587 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#1a1a2e">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ARSH Logistics">
-<link rel="manifest" href="./manifest.json">
-<link rel="apple-touch-icon" href="./icon-192.png">
-<link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png">
-<link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png">
-<title>ARSH Logistics – Billing System</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script>
-const FIREBASE_CONFIG = {
-  apiKey:"AIzaSyCl9uDDcLLw7Ga1z0kJdcpqqAhDQQpE4PU",
-  authDomain:"arsh-logistics-c40d4.firebaseapp.com",
-  databaseURL:"https://arsh-logistics-c40d4-default-rtdb.firebaseio.com",
-  projectId:"arsh-logistics-c40d4",
-  storageBucket:"arsh-logistics-c40d4.firebasestorage.app",
-  messagingSenderId:"480188750652",
-  appId:"1:480188750652:web:a8e2de6237e7b2ed2c9c39"
-};
-</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARSH Logistics – Management Portal</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+const FB={apiKey:"AIzaSyCl9uDDcLLw7Ga1z0kJdcpqqAhDQQpE4PU",authDomain:"arsh-logistics-c40d4.firebaseapp.com",databaseURL:"https://arsh-logistics-c40d4-default-rtdb.firebaseio.com",projectId:"arsh-logistics-c40d4",storageBucket:"arsh-logistics-c40d4.firebasestorage.app",messagingSenderId:"480188750652",appId:"1:480188750652:web:a8e2de6237e7b2ed2c9c39"};
+const CO={name:"ARSH LOGISTICS",a1:"ADD. DEHRADUN ROAD, OPP POWER HOUSE, NEAR SHERIYA CO.",a2:"BHAGWANPUR, DISTT- HARIDWAR (U.K.) 247661",email:"ARSHLOGISTICS2025@GMAIL.COM",mob:"9411561287",gstin:"05HOBPD5470P1ZM",pan:"HOBPD5470P",state:"05",bank:"ICICI BANK",accN:"ARSH LOGISTICS",accNo:"364205500521",ifsc:"ICIC0003642"};
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#1a1a2e;}
-.app{max-width:1150px;margin:0 auto;padding:1rem 1rem 3rem;}
+:root{--nv:#1a1a2e;--ac:#0f3460;--gn:#059669;--or:#ea580c;--rd:#dc2626;--pu:#7c3aed;--bg:#f1f5f9;--bd:#e2e8f0;--tx:#1e293b;--su:#64748b;--wh:#ffffff;}
+body{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;}
 
-/* TOPBAR */
-.topbar{background:linear-gradient(135deg,#1a1a2e,#0f3460);border-radius:12px;padding:14px 20px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
-.brand{display:flex;align-items:center;gap:12px;}
-.logo-box{width:48px;height:48px;border-radius:8px;overflow:hidden;background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px dashed rgba(255,255,255,0.4);}
-.logo-box img{width:100%;height:100%;object-fit:contain;}
-.logo-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;}
-.logo-ph svg{width:22px;height:22px;fill:#999;}
-.logo-ph span{font-size:8px;color:#999;margin-top:2px;}
-.brand-name{color:white;font-size:18px;font-weight:700;}
-.brand-addr{color:rgba(255,255,255,0.5);font-size:11px;margin-top:1px;}
-.sync-badge{display:flex;align-items:center;gap:6px;color:rgba(255,255,255,0.7);font-size:12px;}
+/* ── SIDEBAR ── */
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:240px;background:linear-gradient(180deg,#1a1a2e 0%,#0f3460 100%);z-index:100;display:flex;flex-direction:column;box-shadow:4px 0 20px rgba(0,0,0,.25);}
+.sb-logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:12px;}
+.sb-logo-icon{width:42px;height:42px;background:linear-gradient(135deg,#fbbf24,#f59e0b);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#1a1a2e;flex-shrink:0;}
+.sb-logo-text{color:white;}
+.sb-logo-text .n{font-size:14px;font-weight:700;letter-spacing:.5px;}
+.sb-logo-text .s{font-size:10px;color:rgba(255,255,255,.5);margin-top:1px;}
+.sb-nav{flex:1;padding:12px 10px;overflow-y:auto;}
+.sb-section{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.35);padding:12px 10px 6px;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.65);font-size:13px;font-weight:500;transition:all .2s;margin-bottom:2px;border:none;background:none;width:100%;font-family:inherit;text-align:left;}
+.sb-item i{width:18px;text-align:center;font-size:14px;}
+.sb-item:hover{background:rgba(255,255,255,.1);color:white;}
+.sb-item.active{background:rgba(255,255,255,.18);color:white;box-shadow:inset 3px 0 0 #fbbf24;}
+.sb-item .badge{margin-left:auto;background:rgba(255,255,255,.2);border-radius:20px;padding:2px 8px;font-size:10px;}
+.sb-footer{padding:16px;border-top:1px solid rgba(255,255,255,.1);}
+.sync-pill{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.6);font-size:11px;}
 .dot{width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite;}
 .dot.off{background:#ef4444;animation:none;}
-@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
-.nav-btns{display:flex;gap:5px;flex-wrap:wrap;}
-.nav-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.85);padding:7px 13px;border-radius:7px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:500;transition:all 0.15s;}
-.nav-btn:hover,.nav-btn.active{background:rgba(255,255,255,0.25);color:white;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
 
-/* TABS */
-.tabs{display:flex;gap:4px;margin-bottom:1rem;background:white;border-radius:10px;padding:4px;border:1px solid #e5e7eb;overflow-x:auto;}
-.tab{flex:1;padding:8px 10px;font-size:13px;border:none;background:transparent;border-radius:7px;cursor:pointer;color:#6b7280;font-family:'DM Sans',sans-serif;font-weight:500;transition:all 0.15s;white-space:nowrap;}
-.tab.active{background:#1a1a2e;color:white;}
-.sec{display:none;}.sec.active{display:block;}
+/* ── MAIN ── */
+.main{margin-left:240px;min-height:100vh;display:flex;flex-direction:column;}
+.topbar{background:white;border-bottom:1px solid var(--bd);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.page-title{font-size:18px;font-weight:700;color:var(--tx);}
+.page-sub{font-size:12px;color:var(--su);}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.content{padding:28px;flex:1;}
 
-/* CARDS */
-.card{background:white;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px;}
-.ctitle{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#6b7280;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+/* ── BUTTONS ── */
+.btn{padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px;transition:all .15s;font-family:inherit;white-space:nowrap;}
+.btn-primary{background:var(--nv);color:white;box-shadow:0 2px 8px rgba(26,26,46,.25);}.btn-primary:hover{background:#2d2d4e;transform:translateY(-1px);}
+.btn-success{background:var(--gn);color:white;box-shadow:0 2px 8px rgba(5,150,105,.3);}.btn-success:hover{background:#047857;transform:translateY(-1px);}
+.btn-danger{background:var(--rd);color:white;}.btn-danger:hover{background:#b91c1c;}
+.btn-warning{background:#d97706;color:white;}.btn-warning:hover{background:#b45309;}
+.btn-purple{background:var(--pu);color:white;}.btn-purple:hover{background:#6d28d9;}
+.btn-outline{background:white;color:var(--tx);border:1px solid var(--bd);}.btn-outline:hover{background:#f8fafc;border-color:#94a3b8;}
+.btn-ghost{background:transparent;color:var(--su);border:none;padding:8px 12px;}.btn-ghost:hover{background:#f1f5f9;color:var(--tx);}
+.btn-sm{padding:6px 12px;font-size:12px;}
+.btn-xs{padding:5px 9px;font-size:11px;}
+.btn-icon{width:34px;height:34px;padding:0;border-radius:7px;justify-content:center;}
+.btn-grp{display:flex;gap:8px;flex-wrap:wrap;}
 
-/* FORM */
-.fg{display:flex;flex-direction:column;gap:4px;}
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.stat-card{background:white;border-radius:14px;padding:20px;border:1px solid var(--bd);box-shadow:0 1px 4px rgba(0,0,0,.05);display:flex;gap:16px;align-items:flex-start;transition:transform .2s,box-shadow .2s;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,0,0,.1);}
+.stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.stat-icon.gn{background:linear-gradient(135deg,#d1fae5,#a7f3d0);color:#047857;}
+.stat-icon.bl{background:linear-gradient(135deg,#dbeafe,#bfdbfe);color:#1d4ed8;}
+.stat-icon.or{background:linear-gradient(135deg,#ffedd5,#fed7aa);color:#c2410c;}
+.stat-icon.pu{background:linear-gradient(135deg,#ede9fe,#ddd6fe);color:#6d28d9;}
+.stat-label{font-size:12px;color:var(--su);font-weight:500;margin-bottom:4px;}
+.stat-value{font-size:26px;font-weight:700;color:var(--tx);line-height:1;}
+.stat-trend{font-size:11px;color:var(--gn);margin-top:4px;}
+
+/* ── CARDS ── */
+.card{background:white;border-radius:14px;border:1px solid var(--bd);padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.card-title{font-size:14px;font-weight:700;color:var(--tx);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.card-title i{color:var(--ac);}
+
+/* ── GRID ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;}
+.g-dash{display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:20px;}
+
+/* ── FORM ── */
+.fsec{background:white;border-radius:14px;border:1px solid var(--bd);padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.ftitle{font-size:14px;font-weight:700;color:var(--tx);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px;}
+.ftitle i{color:var(--ac);font-size:16px;}
+.fg{display:flex;flex-direction:column;gap:5px;}
 .fg.full{grid-column:1/-1;}
-label{font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.04em;}
-input,select{border:1px solid #d1d5db;border-radius:7px;padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;background:white;color:#1a1a2e;outline:none;width:100%;transition:border-color 0.15s;}
-input:focus,select:focus{border-color:#1a1a2e;box-shadow:0 0 0 3px rgba(26,26,46,0.08);}
-input[type=file]{display:none;}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
-.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;}
+label.fl{font-size:11px;font-weight:600;color:var(--su);text-transform:uppercase;letter-spacing:.05em;}
+input.fi,select.fi,textarea.fi{border:1.5px solid var(--bd);border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;background:white;color:var(--tx);outline:none;width:100%;transition:all .15s;}
+input.fi:focus,select.fi:focus,textarea.fi:focus{border-color:var(--nv);box-shadow:0 0 0 3px rgba(26,26,46,.08);}
+textarea.fi{resize:vertical;min-height:64px;}
+.fi-ro{background:#f8fafc;font-weight:600;color:var(--ac);}
 
-/* BUTTONS */
-.btn{padding:8px 15px;border-radius:7px;border:1px solid #d1d5db;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px;font-weight:600;}
-.btn-dark{background:#1a1a2e;border-color:#1a1a2e;color:white;}
-.btn-dark:hover{background:#2d2d4e;}
-.btn-green{background:#059669;border-color:#059669;color:white;}
-.btn-green:hover{background:#047857;}
-.btn-red{background:#dc2626;border-color:#dc2626;color:white;}
-.btn-ghost{background:transparent;color:#6b7280;border-color:transparent;}
-.btn-ghost:hover{background:#f3f4f6;}
-.btn-sm{font-size:11px;padding:5px 10px;}
-.arow{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap;}
-.sel-row{margin-bottom:12px;}
-.sel-row label{display:block;margin-bottom:5px;}
+/* ── TABLE ── */
+.tw{overflow-x:auto;border-radius:12px;border:1px solid var(--bd);}
+table.dt{width:100%;border-collapse:collapse;font-size:13px;}
+table.dt thead{background:linear-gradient(135deg,#1a1a2e,#0f3460);}
+table.dt th{padding:12px 14px;text-align:left;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;color:rgba(255,255,255,.85);}
+table.dt td{padding:11px 14px;border-bottom:1px solid #f1f5f9;vertical-align:middle;color:var(--tx);}
+table.dt tbody tr:last-child td{border-bottom:none;}
+table.dt tbody tr:hover td{background:#f8fafc;}
+.cbc{width:44px;text-align:center;}
+input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--nv);border-radius:4px;}
 
-/* BANK TABLE */
-table.btbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px;}
-table.btbl th{background:#f3f4f6;padding:7px 10px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;border:1px solid #e5e7eb;}
-table.btbl td{padding:6px 10px;border:1px solid #e5e7eb;}
-table.btbl td.lbl{font-weight:600;color:#6b7280;font-size:12px;background:#fafafa;width:30%;}
-table.btbl td input{border:none;background:transparent;padding:0;font-size:13px;color:#1a1a2e;width:100%;}
-table.btbl td input:focus{outline:none;}
+/* ── BADGES ── */
+.badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;}
+.bg-gn{background:#d1fae5;color:#065f46;}
+.bg-rd{background:#fee2e2;color:#991b1b;}
+.bg-yw{background:#fef3c7;color:#92400e;}
+.bg-bl{background:#dbeafe;color:#1e40af;}
+.bg-pu{background:#ede9fe;color:#5b21b6;}
 
-/* SHIPMENT TABLE */
-.sh-wrap{overflow-x:auto;margin-bottom:12px;border:1px solid #e5e7eb;border-radius:8px;}
-table.sh{width:100%;border-collapse:collapse;font-size:11px;min-width:1100px;}
-table.sh th{background:#1a1a2e;color:white;padding:8px 5px;text-align:center;font-weight:700;font-size:9px;text-transform:uppercase;white-space:nowrap;}
-table.sh td{padding:5px;border-bottom:1px solid #f3f4f6;text-align:center;vertical-align:middle;}
-table.sh tr:nth-child(even) td{background:#fafafa;}
-table.sh td input{padding:4px 5px;font-size:11px;border-radius:5px;text-align:center;}
-.del-btn{background:none;border:none;cursor:pointer;color:#dc2626;font-size:17px;font-weight:700;padding:2px 6px;border-radius:4px;}
-.del-btn:hover{background:#fee2e2;}
+/* ── SEARCH & FILTER ── */
+.search-bar{background:white;border-radius:10px;border:1.5px solid var(--bd);padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px;transition:border-color .15s;}
+.search-bar:focus-within{border-color:var(--nv);}
+.search-bar i{color:var(--su);}
+.search-bar input{border:none;font-size:13px;outline:none;flex:1;background:transparent;color:var(--tx);}
 
-/* TOTALS */
-.tot-box{background:#f0f4ff;border:1px solid #dde3f0;border-radius:9px;padding:12px 16px;min-width:270px;}
-.trow{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#6b7280;}
-.trow.grand{font-size:16px;font-weight:700;border-top:1px solid #d1d5db;margin-top:6px;padding-top:8px;color:#1a1a2e;}
+/* ── MERGE BAR ── */
+.merge-bar{background:linear-gradient(135deg,var(--nv),var(--ac));color:white;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:none;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 4px 16px rgba(26,26,46,.3);}
+.merge-bar.on{display:flex;}
 
-/* BILL LIST */
-.bill-item{background:white;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;transition:box-shadow 0.15s;}
-.bill-item:hover{box-shadow:0 2px 8px rgba(0,0,0,0.08);}
-.bill-acts{display:flex;gap:5px;flex-shrink:0;}
-.p-item{background:white;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:8px;}
-.p-ico{width:36px;height:36px;background:#eff0ff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
-.empty{text-align:center;padding:2.5rem;color:#9ca3af;}
-.logo-up{border:2px dashed #d1d5db;border-radius:10px;padding:20px;text-align:center;cursor:pointer;background:#fafafa;}
-.logo-up:hover{border-color:#1a1a2e;}
+/* ── CALC BOX ── */
+.calc-box{background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-radius:12px;padding:16px;border:1px solid var(--bd);}
+.crow{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;color:var(--su);}
+.crow b{color:var(--tx);}
+.crow.tot{font-size:17px;font-weight:700;color:var(--tx);border-top:2px solid var(--bd);padding-top:10px;margin-top:6px;}
 
-/* MODAL */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;align-items:center;justify-content:center;}
-.overlay.open{display:flex;}
-.modal{background:white;border-radius:14px;padding:24px;width:460px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,0.18);max-height:90vh;overflow-y:auto;}
-.modal h3{font-size:15px;font-weight:700;margin-bottom:16px;}
-.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
-.macts{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;}
+/* ── PAGE HEADER ── */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+.ph-title{font-size:22px;font-weight:700;color:var(--tx);}
+.ph-sub{font-size:13px;color:var(--su);margin-top:3px;}
 
-/* TOAST */
-.toast{position:fixed;bottom:20px;right:20px;background:#1a1a2e;color:white;padding:11px 18px;border-radius:9px;font-size:13px;font-weight:600;opacity:0;transform:translateY(10px);transition:all 0.25s;pointer-events:none;z-index:9999;max-width:300px;}
-.toast.show{opacity:1;transform:translateY(0);}
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--tx);color:white;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none;z-index:9999;max-width:320px;box-shadow:0 8px 24px rgba(0,0,0,.2);display:flex;align-items:center;gap:10px;}
+.toast.on{opacity:1;transform:translateY(0);}
+.toast.ok{background:#065f46;}
+.toast.er{background:#991b1b;}
 
-/* SUMMARY CARDS */
-.sum-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;}
-.sum-card{border-radius:10px;padding:12px 14px;}
+/* ── PAGES ── */
+.page{display:none;}
+.page.on{display:block;}
 
-@media(max-width:600px){
-  .g2,.g3,.g4{grid-template-columns:1fr;}
-  .topbar{flex-direction:column;}
-  .sum-grid{grid-template-columns:1fr;}
+/* ── EMPTY STATE ── */
+.empty-state{text-align:center;padding:48px 24px;color:var(--su);}
+.empty-state i{font-size:40px;margin-bottom:12px;opacity:.4;}
+.empty-state h3{font-size:15px;font-weight:600;color:var(--tx);margin-bottom:4px;}
+
+/* ── QUICK ACTION CARD ── */
+.qa-btn{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:10px;border:1.5px solid var(--bd);cursor:pointer;transition:all .2s;background:white;font-family:inherit;color:var(--tx);width:100%;text-align:left;}
+.qa-btn:hover{border-color:var(--nv);box-shadow:0 2px 12px rgba(26,26,46,.12);transform:translateX(4px);}
+.qa-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .sidebar{display:none;}
+  .main{margin-left:0;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .g2,.g3,.g4,.g-dash{grid-template-columns:1fr;}
+  body{padding-bottom:70px;}
+  .mobile-nav{display:flex !important;}
 }
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#1a1a2e,#0f3460);z-index:100;border-top:1px solid rgba(255,255,255,.1);padding:6px 0;}
+.mn-btn{flex:1;background:none;border:none;color:rgba(255,255,255,.6);font-size:10px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:5px;font-family:inherit;transition:color .2s;}
+.mn-btn i{font-size:20px;}
+.mn-btn.active{color:#fbbf24;}
 </style>
 </head>
 <body>
-<div class="app">
 
-<!-- TOPBAR -->
-<div class="topbar">
-  <div class="brand">
-    <div class="logo-box" onclick="document.getElementById('li1').click()" title="Logo upload">
-      <input type="file" id="li1" accept="image/*" onchange="uploadLogo(this)">
-      <div class="logo-ph" id="lph1">
-        <svg viewBox="0 0 24 24"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm13.5-9 1.96 2.5H17V9h2.5zM18 18c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/></svg>
-        <span>Logo</span>
-      </div>
-      <img id="limg1" src="" style="display:none;width:100%;height:100%;object-fit:contain;">
-    </div>
-    <div>
-      <div class="brand-name" id="topName">ARSH Logistics</div>
-      <div class="brand-addr" id="topAddr">Roorkee, Haridwar</div>
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-icon"><i class="fas fa-truck"></i></div>
+    <div class="sb-logo-text">
+      <div class="n">ARSH LOGISTICS</div>
+      <div class="s">Management Portal</div>
     </div>
   </div>
-  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-    <div style="display:flex;align-items:center;gap:8px;">
-      <div class="sync-badge"><span class="dot off" id="syncDot"></span><span id="syncTxt">Connecting...</span></div>
-      <button id="installBtn" onclick="installApp()" style="display:none;background:rgba(255,193,7,0.2);border:1px solid rgba(255,193,7,0.5);color:#ffc107;padding:6px 12px;border-radius:7px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:600;">📲 App Install Karo</button>
-    </div>
-    <div class="nav-btns">
-      <button class="nav-btn active" onclick="goTab('new')" id="nb-new">+ Invoice</button>
-      <button class="nav-btn" onclick="goTab('list')" id="nb-list">Bills</button>
-      <button class="nav-btn" onclick="goTab('parties')" id="nb-parties">Parties</button>
-      <button class="nav-btn" onclick="goTab('companies')" id="nb-companies">Companies</button>
-      <button class="nav-btn" onclick="goTab('settings')" id="nb-settings">⚙ Settings</button>
-    </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Main Menu</div>
+    <button class="sb-item active" onclick="goP('dash')" id="si-dash"><i class="fas fa-chart-pie"></i>Dashboard</button>
+    <button class="sb-item" onclick="goP('bilty')" id="si-bilty"><i class="fas fa-file-alt"></i>Bilty (LR) <span class="badge" id="bCount">0</span></button>
+    <button class="sb-item" onclick="goP('inv')" id="si-inv"><i class="fas fa-file-invoice"></i>Invoice <span class="badge" id="iCount">0</span></button>
+    <div class="sb-section" style="margin-top:8px;">Quick Create</div>
+    <button class="sb-item" onclick="goP('bilty');showBF()"><i class="fas fa-plus-circle"></i>New Bilty</button>
+    <button class="sb-item" onclick="goP('inv');showIF()"><i class="fas fa-plus-circle"></i>New Invoice</button>
+  </nav>
+  <div class="sb-footer">
+    <div class="sync-pill"><span class="dot off" id="sdot"></span><span id="stxt">Connecting...</span></div>
   </div>
-</div>
+</aside>
 
-<!-- MOBILE TABS -->
-<div class="tabs">
-  <button class="tab active" onclick="goTab('new')">+ Invoice</button>
-  <button class="tab" onclick="goTab('list')">Bills</button>
-  <button class="tab" onclick="goTab('parties')">Parties</button>
-  <button class="tab" onclick="goTab('companies')">Companies</button>
-  <button class="tab" onclick="goTab('settings')">Settings</button>
-</div>
-
-<!-- ═══ NEW INVOICE ═══ -->
-<div id="sec-new" class="sec active">
-
-  <div class="card">
-    <div class="ctitle">Invoice Details</div>
-    <div class="g4">
-      <div class="fg"><label>Freight Bill No</label><input id="fBillNo" placeholder="2025/26/038"/></div>
-      <div class="fg"><label>Invoice Date</label><input type="date" id="fDate"/></div>
-      <div class="fg"><label>Due Date</label><input type="date" id="fDue"/></div>
-      <div class="fg"><label>From Location</label><input id="fFrom" placeholder="Roorkee" oninput="rem('fFrom',this.value)"/></div>
-    </div>
-  </div>
-
-  <!-- COMPANY -->
-  <div class="card">
-    <div class="ctitle">
-      <span>Our Company (Sender)</span>
-      <button class="btn btn-sm" style="background:white;border:1px solid #d1d5db;color:#1a1a2e;" onclick="openModal('comp')">+ Save Karo</button>
-    </div>
-    <div class="sel-row">
-      <label>Saved Company Select Karo</label>
-      <select id="compSel" onchange="fillComp(this.value)" style="max-width:460px;">
-        <option value="">-- Company select karo --</option>
-      </select>
-    </div>
-    <div class="g3">
-      <div class="fg"><label>Company Name *</label><input id="fcName" placeholder="ARSH Logistics" oninput="rem('fcName',this.value)"/></div>
-      <div class="fg"><label>PAN No</label><input id="fcPAN" oninput="rem('fcPAN',this.value)"/></div>
-      <div class="fg"><label>Email</label><input id="fcEmail" oninput="rem('fcEmail',this.value)"/></div>
-      <div class="fg full"><label>Address</label><input id="fcAddr" oninput="rem('fcAddr',this.value)"/></div>
-      <div class="fg"><label>Phone</label><input id="fcPhone" oninput="rem('fcPhone',this.value)"/></div>
-    </div>
-    <div class="ctitle" style="margin-top:14px;margin-bottom:10px;">Bank Details</div>
-    <table class="btbl">
-      <thead><tr><th style="width:30%;">Field</th><th>Value</th></tr></thead>
-      <tbody>
-        <tr><td class="lbl">1. PAN No</td><td><input id="fcPAN2" oninput="document.getElementById('fcPAN').value=this.value;rem('fcPAN',this.value)"/></td></tr>
-        <tr><td class="lbl">2. GST No</td><td><input id="fcGSTIN" oninput="rem('fcGSTIN',this.value)"/></td></tr>
-        <tr><td class="lbl">3. State Code</td><td><input id="fcState" oninput="rem('fcState',this.value)"/></td></tr>
-        <tr><td class="lbl">4. Bank Name</td><td><input id="fcBank" oninput="rem('fcBank',this.value)"/></td></tr>
-        <tr><td class="lbl">5. Account Name</td><td><input id="fcAccN" oninput="rem('fcAccN',this.value)"/></td></tr>
-        <tr><td class="lbl">6. Account No</td><td><input id="fcAccNo" oninput="rem('fcAccNo',this.value)"/></td></tr>
-        <tr><td class="lbl">7. IFS Code</td><td><input id="fcIFSC" oninput="rem('fcIFSC',this.value)"/></td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- PARTY -->
-  <div class="card">
-    <div class="ctitle">
-      <span>Party / Consignee (Receiver)</span>
-      <button class="btn btn-sm" style="background:white;border:1px solid #d1d5db;color:#1a1a2e;" onclick="openModal('party')">+ Save Karo</button>
-    </div>
-    <div class="sel-row">
-      <label>Saved Party Select Karo</label>
-      <select id="partySel" onchange="fillParty(this.value)" style="max-width:460px;">
-        <option value="">-- Party select karo --</option>
-      </select>
-    </div>
-    <div class="g3">
-      <div class="fg"><label>Party Name *</label><input id="fPN" placeholder="Grivaa Springs Pvt Ltd" oninput="rem('fPN',this.value)"/></div>
-      <div class="fg"><label>GSTIN</label><input id="fGST" oninput="rem('fGST',this.value)"/></div>
-      <div class="fg"><label>Phone</label><input id="fPh" oninput="rem('fPh',this.value)"/></div>
-      <div class="fg full"><label>Address</label><input id="fAddr" oninput="rem('fAddr',this.value)"/></div>
-    </div>
-  </div>
-
-  <!-- SHIPMENT TABLE -->
-  <div class="card">
-    <div class="ctitle">
-      <span>Shipment Details</span>
-      <button class="btn btn-sm" style="background:white;border:1px solid #d1d5db;color:#1a1a2e;" onclick="addRow()">+ Row Add Karo</button>
-    </div>
-    <div class="sh-wrap">
-      <table class="sh">
-        <thead><tr>
-          <th>S.No</th><th>Date</th><th>LR No.</th><th>Destination</th><th>CN No.</th>
-          <th>Truck No</th><th>Invoice No</th><th>Pkgs</th><th>Wt(Kg)</th>
-          <th>Arrival</th><th>Delivery</th><th>Truck Type</th>
-          <th>Freight(Rs.)</th><th>To Pt(Rs.)</th><th>Unload(Rs.)</th>
-          <th>Src Det(Rs.)</th><th>Dst Det(Rs.)</th><th>Total(Rs.)</th><th></th>
-        </tr></thead>
-        <tbody id="shBody"></tbody>
-      </table>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-top:4px;">
-      <div></div>
-      <div class="tot-box">
-        <div class="trow"><span>Total Freight</span><span id="tF">₹0</span></div>
-        <div class="trow"><span>To Point + Unloading</span><span id="tE">₹0</span></div>
-        <div class="trow"><span>Detention</span><span id="tD">₹0</span></div>
-        <div class="trow grand"><span>Grand Total</span><span id="tG">₹0</span></div>
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div>
+        <div class="page-title" id="ptitle">Dashboard</div>
+        <div class="page-sub" id="psub">Overview & summary</div>
       </div>
     </div>
-    <div class="arow">
-      <button class="btn btn-ghost" onclick="clearForm()">Clear</button>
-      <button class="btn btn-green" onclick="saveBill()">💾 Save Invoice</button>
-      <button class="btn btn-dark" onclick="pdfFromForm()">⬇ PDF Download</button>
+    <div class="topbar-right">
+      <button class="btn btn-primary" onclick="goP('bilty');showBF()"><i class="fas fa-plus"></i>New Bilty</button>
+      <button class="btn btn-success" onclick="goP('inv');showIF()"><i class="fas fa-plus"></i>New Invoice</button>
     </div>
   </div>
-</div>
 
-<!-- ═══ ALL BILLS ═══ -->
-<div id="sec-list" class="sec">
-  <div class="card">
-    <div class="ctitle">Saare Bills <span id="billCount" style="font-weight:400;color:#9ca3af;font-size:12px;text-transform:none;letter-spacing:0;"></span></div>
-    <div id="listWrap"></div>
-  </div>
-</div>
+  <div class="content">
 
-<!-- ═══ PARTIES ═══ -->
-<div id="sec-parties" class="sec">
-  <div class="card">
-    <div class="ctitle"><span>Saved Parties</span><button class="btn btn-dark btn-sm" onclick="openModal('party')">+ Add</button></div>
-    <div id="partiesWrap"></div>
-  </div>
-</div>
-
-<!-- ═══ COMPANIES ═══ -->
-<div id="sec-companies" class="sec">
-  <div class="card">
-    <div class="ctitle"><span>Saved Companies</span><button class="btn btn-dark btn-sm" onclick="openModal('comp')">+ Add</button></div>
-    <div id="companiesWrap"></div>
-  </div>
-</div>
-
-<!-- ═══ SETTINGS ═══ -->
-<div id="sec-settings" class="sec">
-  <div class="card">
-    <div class="ctitle">Company Logo</div>
-    <div class="logo-up" onclick="document.getElementById('li2').click()">
-      <input type="file" id="li2" accept="image/*" onchange="uploadLogo(this)">
-      <img id="limg2" src="" style="display:none;max-height:70px;max-width:200px;object-fit:contain;margin:0 auto 8px;">
-      <div id="lhint"><div style="font-size:13px;font-weight:600;color:#6b7280;">📁 Logo Upload Karo (click karo)</div><div style="font-size:12px;color:#9ca3af;margin-top:3px;">PNG, JPG • PDF header mein print hoga</div></div>
+    <!-- ════ DASHBOARD ════ -->
+    <div class="page on" id="pg-dash">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon gn"><i class="fas fa-file-alt"></i></div><div><div class="stat-label">Total Bilties</div><div class="stat-value" id="dB">0</div><div class="stat-trend"><i class="fas fa-circle-dot"></i> LR Generated</div></div></div>
+        <div class="stat-card"><div class="stat-icon bl"><i class="fas fa-file-invoice"></i></div><div><div class="stat-label">Total Invoices</div><div class="stat-value" id="dI">0</div><div class="stat-trend"><i class="fas fa-circle-dot"></i> Bills Generated</div></div></div>
+        <div class="stat-card"><div class="stat-icon or"><i class="fas fa-rupee-sign"></i></div><div><div class="stat-label">Total Revenue</div><div class="stat-value" id="dR" style="font-size:18px;">₹0</div><div class="stat-trend"><i class="fas fa-circle-dot"></i> All Invoices</div></div></div>
+        <div class="stat-card"><div class="stat-icon pu"><i class="fas fa-clock"></i></div><div><div class="stat-label">Pending</div><div class="stat-value" id="dP">0</div><div class="stat-trend"><i class="fas fa-circle-dot"></i> Unpaid Invoices</div></div></div>
+      </div>
+      <div class="g-dash">
+        <div class="card"><div class="card-title"><span><i class="fas fa-chart-bar"></i> Monthly Revenue</span></div><canvas id="rchart" height="160"></canvas></div>
+        <div class="card"><div class="card-title"><span><i class="fas fa-bolt"></i> Quick Actions</span></div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="qa-btn" onclick="goP('bilty');showBF()"><div class="qa-icon" style="background:#dbeafe;color:#1d4ed8;"><i class="fas fa-plus"></i></div><div><div style="font-weight:600;font-size:13px;">Create New Bilty</div><div style="font-size:11px;color:var(--su);">Generate LR receipt</div></div></button>
+            <button class="qa-btn" onclick="goP('inv');showIF()"><div class="qa-icon" style="background:#d1fae5;color:#047857;"><i class="fas fa-plus"></i></div><div><div style="font-weight:600;font-size:13px;">Create New Invoice</div><div style="font-size:11px;color:var(--su);">Generate freight bill</div></div></button>
+            <button class="qa-btn" onclick="goP('bilty')"><div class="qa-icon" style="background:#ede9fe;color:#6d28d9;"><i class="fas fa-list"></i></div><div><div style="font-weight:600;font-size:13px;">View All Bilties</div><div style="font-size:11px;color:var(--su);">Manage LR records</div></div></button>
+            <button class="qa-btn" onclick="goP('inv')"><div class="qa-icon" style="background:#ffedd5;color:#c2410c;"><i class="fas fa-list"></i></div><div><div style="font-weight:600;font-size:13px;">View All Invoices</div><div style="font-size:11px;color:var(--su);">Manage billing records</div></div></button>
+          </div>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="card"><div class="card-title"><span><i class="fas fa-file-alt"></i> Recent Bilties</span><button class="btn btn-ghost btn-sm" onclick="goP('bilty')">View All <i class="fas fa-arrow-right"></i></button></div><div class="tw"><table class="dt"><thead><tr><th>GR No</th><th>Date</th><th>Route</th><th>Truck</th><th>Amount</th></tr></thead><tbody id="dRB"></tbody></table></div></div>
+        <div class="card"><div class="card-title"><span><i class="fas fa-file-invoice"></i> Recent Invoices</span><button class="btn btn-ghost btn-sm" onclick="goP('inv')">View All <i class="fas fa-arrow-right"></i></button></div><div class="tw"><table class="dt"><thead><tr><th>Bill No</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead><tbody id="dRI"></tbody></table></div></div>
+      </div>
     </div>
-  </div>
-  <div class="card">
-    <div class="ctitle">Website Share Karo</div>
-    <div style="font-size:13px;color:#374151;margin-bottom:10px;">Yeh link share karo — sab ke bills real-time sync honge:</div>
-    <div style="background:#f3f4f6;border-radius:8px;padding:10px 14px;font-size:12px;font-family:monospace;color:#1a1a2e;word-break:break-all;margin-bottom:10px;">https://choudharyashutosh9045.github.io/arsh-logistics</div>
-    <button class="btn btn-dark btn-sm" onclick="navigator.clipboard.writeText('https://choudharyashutosh9045.github.io/arsh-logistics').then(()=>toast('Link copied! 🔗'))">📋 Link Copy Karo</button>
+
+    <!-- ════ BILTY ════ -->
+    <div class="page" id="pg-bilty">
+      <!-- LIST -->
+      <div id="bList">
+        <div class="ph">
+          <div><div class="ph-title">Bilty Management</div><div class="ph-sub">Create & manage Lorry Receipt (LR) documents</div></div>
+          <div class="btn-grp">
+            <button class="btn btn-primary" onclick="showBF()"><i class="fas fa-plus"></i>New Bilty</button>
+            <button class="btn btn-purple" onclick="mergeB()"><i class="fas fa-layer-group"></i>Merge Selected PDF</button>
+          </div>
+        </div>
+        <div class="merge-bar" id="bMbar">
+          <div style="display:flex;align-items:center;gap:10px;"><i class="fas fa-check-square"></i><span><b><span id="bSelC">0</span> bilties</b> selected</span></div>
+          <div class="btn-grp">
+            <button class="btn btn-outline btn-sm" onclick="clearBSel()"><i class="fas fa-times"></i>Clear</button>
+            <button class="btn btn-danger btn-sm" onclick="mergeB()"><i class="fas fa-file-pdf"></i>Download Merged PDF</button>
+          </div>
+        </div>
+        <div class="search-bar"><i class="fas fa-search"></i><input id="bSrch" placeholder="Search by GR No, Truck No, Consignor, Location..." oninput="filterB()"></div>
+        <div class="tw"><table class="dt">
+          <thead><tr><th class="cbc"><input type="checkbox" id="bAll" onchange="togAllB(this)"></th><th>GR No</th><th>Date</th><th>Consignor</th><th>Consignee</th><th>Route</th><th>Truck No</th><th>Grand Total</th><th>Status</th><th style="text-align:center;">Actions</th></tr></thead>
+          <tbody id="bTb"></tbody>
+        </table></div>
+      </div>
+      <!-- BILTY FORM -->
+      <div id="bForm" style="display:none;">
+        <div class="ph">
+          <div><div class="ph-title" id="bFT">New Bilty</div><div class="ph-sub">Fill in the details to generate LR receipt</div></div>
+          <button class="btn btn-outline" onclick="hideBF()"><i class="fas fa-arrow-left"></i>Back to List</button>
+        </div>
+        <div class="fsec"><div class="ftitle"><i class="fas fa-hashtag"></i>Bilty Information</div>
+          <div class="g4">
+            <div class="fg"><label class="fl">GR Number</label><input id="bGR" class="fi fi-ro" readonly></div>
+            <div class="fg"><label class="fl">Date *</label><input type="date" id="bDate" class="fi"></div>
+            <div class="fg"><label class="fl">Status</label><select id="bStat" class="fi"><option>Pending</option><option>Delivered</option><option>In Transit</option></select></div>
+            <div class="fg"><label class="fl">Bill No</label><input id="bBNo" class="fi" placeholder="Reference bill no."></div>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="fsec"><div class="ftitle"><i class="fas fa-user-tie"></i>Consignor (Sender)</div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div class="fg"><label class="fl">Name *</label><input id="bCoNm" class="fi" placeholder="Company or Person name"></div>
+              <div class="fg"><label class="fl">Address</label><textarea id="bCoAd" class="fi" rows="2" placeholder="Full address"></textarea></div>
+              <div class="g2"><div class="fg"><label class="fl">GSTIN</label><input id="bCoGs" class="fi" placeholder="GSTIN number"></div><div class="fg"><label class="fl">Phone</label><input id="bCoPh" class="fi" placeholder="Mobile"></div></div>
+            </div>
+          </div>
+          <div class="fsec"><div class="ftitle"><i class="fas fa-user"></i>Consignee (Receiver)</div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div class="fg"><label class="fl">Name *</label><input id="bCeNm" class="fi" placeholder="Company or Person name"></div>
+              <div class="fg"><label class="fl">Address</label><textarea id="bCeAd" class="fi" rows="2" placeholder="Full address"></textarea></div>
+              <div class="g2"><div class="fg"><label class="fl">GSTIN</label><input id="bCeGs" class="fi" placeholder="GSTIN number"></div><div class="fg"><label class="fl">Phone</label><input id="bCePh" class="fi" placeholder="Mobile"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="fsec"><div class="ftitle"><i class="fas fa-truck-moving"></i>Transport Details</div>
+          <div class="g3">
+            <div class="fg"><label class="fl">From Location *</label><input id="bFrom" class="fi" placeholder="Loading point / City"></div>
+            <div class="fg"><label class="fl">To Location *</label><input id="bTo" class="fi" placeholder="Delivery point / City"></div>
+            <div class="fg"><label class="fl">Truck Number *</label><input id="bTrk" class="fi" placeholder="UK07AB1234"></div>
+          </div>
+        </div>
+        <div class="fsec"><div class="ftitle"><i class="fas fa-boxes-stacked"></i>Package Details</div>
+          <div class="g4">
+            <div class="fg"><label class="fl">No. of Packages</label><input type="number" id="bPkg" class="fi" value="0"></div>
+            <div class="fg"><label class="fl">Particulars / Goods</label><input id="bPart" class="fi" placeholder="e.g. Electronic Items"></div>
+            <div class="fg"><label class="fl">Weight (Kgs)</label><input type="number" id="bWt" class="fi" value="0" step="0.01"></div>
+            <div class="fg"><label class="fl">Value of Goods (₹)</label><input type="number" id="bGV" class="fi" value="0" step="0.01"></div>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="fsec"><div class="ftitle"><i class="fas fa-calculator"></i>Rate Details</div>
+            <div class="g2">
+              <div class="fg"><label class="fl">Freight (₹)</label><input type="number" id="bFr" class="fi" value="0" step="0.01" oninput="calcB()"></div>
+              <div class="fg"><label class="fl">Loading (₹)</label><input type="number" id="bLd" class="fi" value="0" step="0.01" oninput="calcB()"></div>
+              <div class="fg"><label class="fl">Weighting Charges (₹)</label><input type="number" id="bWC" class="fi" value="0" step="0.01" oninput="calcB()"></div>
+              <div class="fg"><label class="fl">G.R. Charge (₹)</label><input type="number" id="bGRC" class="fi" value="50" step="0.01" oninput="calcB()"></div>
+              <div class="fg"><label class="fl">GST %</label><input type="number" id="bGP" class="fi" value="0" step="0.01" oninput="calcB()"></div>
+              <div class="fg"><label class="fl">Advance (₹)</label><input type="number" id="bAdv" class="fi" value="0" step="0.01" oninput="calcB()"></div>
+            </div>
+            <div class="fg" style="margin-top:12px;"><label class="fl">GST Payable By</label><select id="bGPB" class="fi"><option>Consignee</option><option>Consignor</option><option>Transporter</option></select></div>
+          </div>
+          <div class="fsec"><div class="ftitle"><i class="fas fa-indian-rupee-sign"></i>Amount Summary</div>
+            <div class="calc-box">
+              <div class="crow"><span>Freight to be Billed</span><b id="bFtB">₹0.00</b></div>
+              <div class="crow"><span>Advance Paid</span><b id="bADV">₹0.00</b></div>
+              <div class="crow"><span>Balance Amount</span><b id="bBAL">₹0.00</b></div>
+              <div class="crow"><span>GST Amount</span><b id="bGST">₹0.00</b></div>
+              <div class="crow"><span>Freight to Pay</span><b id="bFtP">₹0.00</b></div>
+              <div class="crow tot"><span>GRAND TOTAL</span><span id="bGT">₹0.00</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="btn-grp" style="justify-content:flex-end;margin-top:8px;">
+          <button class="btn btn-outline" onclick="hideBF()"><i class="fas fa-times"></i>Cancel</button>
+          <button class="btn btn-success" onclick="saveB()"><i class="fas fa-save"></i>Save Bilty</button>
+          <button class="btn btn-primary" onclick="saveBPDF()"><i class="fas fa-file-pdf"></i>Save & Download PDF</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ INVOICE ════ -->
+    <div class="page" id="pg-inv">
+      <!-- LIST -->
+      <div id="iList">
+        <div class="ph">
+          <div><div class="ph-title">Invoice Management</div><div class="ph-sub">Create & manage freight invoices</div></div>
+          <div class="btn-grp">
+            <button class="btn btn-primary" onclick="showIF()"><i class="fas fa-plus"></i>New Invoice</button>
+            <button class="btn btn-purple" onclick="mergeI()"><i class="fas fa-layer-group"></i>Merge Selected PDF</button>
+          </div>
+        </div>
+        <div class="merge-bar" id="iMbar">
+          <div style="display:flex;align-items:center;gap:10px;"><i class="fas fa-check-square"></i><span><b><span id="iSelC">0</span> invoices</b> selected</span></div>
+          <div class="btn-grp">
+            <button class="btn btn-outline btn-sm" onclick="clearISel()"><i class="fas fa-times"></i>Clear</button>
+            <button class="btn btn-danger btn-sm" onclick="mergeI()"><i class="fas fa-file-pdf"></i>Download Merged PDF</button>
+          </div>
+        </div>
+        <div class="search-bar"><i class="fas fa-search"></i><input id="iSrch" placeholder="Search by Bill No, Customer, Location..." oninput="filterI()"></div>
+        <div class="tw"><table class="dt">
+          <thead><tr><th class="cbc"><input type="checkbox" id="iAll" onchange="togAllI(this)"></th><th>Bill No</th><th>Date</th><th>Due Date</th><th>Customer</th><th>From</th><th>Shipments</th><th>Total Amount</th><th>Status</th><th style="text-align:center;">Actions</th></tr></thead>
+          <tbody id="iTb"></tbody>
+        </table></div>
+      </div>
+      <!-- INVOICE FORM -->
+      <div id="iForm" style="display:none;">
+        <div class="ph">
+          <div><div class="ph-title" id="iFT">New Invoice</div><div class="ph-sub">Fill in the details to generate freight invoice</div></div>
+          <button class="btn btn-outline" onclick="hideIF()"><i class="fas fa-arrow-left"></i>Back to List</button>
+        </div>
+        <div class="fsec"><div class="ftitle"><i class="fas fa-hashtag"></i>Invoice Information</div>
+          <div class="g4">
+            <div class="fg"><label class="fl">Freight Bill No *</label><input id="iBNo" class="fi" placeholder="2025/26/038"></div>
+            <div class="fg"><label class="fl">Invoice Date *</label><input type="date" id="iDate" class="fi"></div>
+            <div class="fg"><label class="fl">Due Date</label><input type="date" id="iDue" class="fi"></div>
+            <div class="fg"><label class="fl">From Location</label><input id="iFrom" class="fi" value="Roorkee"></div>
+          </div>
+        </div>
+        <div class="fsec"><div class="ftitle"><i class="fas fa-building"></i>Customer / Party Details</div>
+          <div class="g3">
+            <div class="fg"><label class="fl">Customer Name *</label><input id="iCNm" class="fi" placeholder="Company name"></div>
+            <div class="fg"><label class="fl">GSTIN</label><input id="iCGs" class="fi" placeholder="GSTIN number"></div>
+            <div class="fg"><label class="fl">Phone</label><input id="iCPh" class="fi" placeholder="Mobile no."></div>
+            <div class="fg full"><label class="fl">Address</label><input id="iCAd" class="fi" placeholder="Full address"></div>
+          </div>
+        </div>
+        <div class="fsec">
+          <div class="ftitle" style="justify-content:space-between;"><span><i class="fas fa-truck"></i>Shipment Details</span><button class="btn btn-outline btn-sm" onclick="addSR()"><i class="fas fa-plus"></i>Add Row</button></div>
+          <div class="tw"><table class="dt" style="min-width:1100px;">
+            <thead><tr><th>S.No</th><th>Date</th><th>LR No.</th><th>Destination</th><th>CN No.</th><th>Truck No</th><th>Invoice No</th><th>Pkgs</th><th>Wt(Kg)</th><th>Arrival</th><th>Delivery</th><th>Truck Type</th><th>Freight(₹)</th><th>To Pt(₹)</th><th>Unload(₹)</th><th>Src Det(₹)</th><th>Dst Det(₹)</th><th>Total(₹)</th><th></th></tr></thead>
+            <tbody id="sBody"></tbody>
+          </table></div>
+          <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+            <div class="calc-box" style="min-width:280px;">
+              <div class="crow"><span>Total Freight</span><b id="iTF">₹0</b></div>
+              <div class="crow"><span>To Point + Unloading</span><b id="iTE">₹0</b></div>
+              <div class="crow"><span>Detention Charges</span><b id="iTD">₹0</b></div>
+              <div class="crow tot"><span>GRAND TOTAL</span><span id="iTG">₹0</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="fsec"><div class="ftitle"><i class="fas fa-cog"></i>Additional Details</div>
+          <div class="g2">
+            <div class="fg"><label class="fl">Payment Status</label><select id="iStat" class="fi"><option>Pending</option><option>Paid</option><option>Partial</option><option>Cancelled</option></select></div>
+            <div class="fg"><label class="fl">Notes</label><input id="iNote" class="fi" placeholder="Any additional notes..."></div>
+          </div>
+        </div>
+        <div class="btn-grp" style="justify-content:flex-end;margin-top:8px;">
+          <button class="btn btn-outline" onclick="hideIF()"><i class="fas fa-times"></i>Cancel</button>
+          <button class="btn btn-success" onclick="saveI()"><i class="fas fa-save"></i>Save Invoice</button>
+          <button class="btn btn-primary" onclick="saveIPDF()"><i class="fas fa-file-pdf"></i>Save & Download PDF</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
-</div><!-- end app -->
-
-<!-- PARTY MODAL -->
-<div class="overlay" id="partyModal">
-  <div class="modal">
-    <h3>🏢 Party Save Karo</h3>
-    <div class="mgrid">
-      <div class="fg" style="grid-column:1/-1;"><label>Party Name *</label><input id="mPN"/></div>
-      <div class="fg"><label>GSTIN</label><input id="mPG"/></div>
-      <div class="fg"><label>Phone</label><input id="mPPh"/></div>
-      <div class="fg" style="grid-column:1/-1;"><label>Address</label><input id="mPAddr"/></div>
-    </div>
-    <div class="macts">
-      <button class="btn btn-ghost" onclick="closeModal('partyModal')">Cancel</button>
-      <button class="btn btn-dark" onclick="saveParty()">💾 Save</button>
-    </div>
-  </div>
+<!-- MOBILE NAV -->
+<div class="mobile-nav" id="mnav">
+  <button class="mn-btn active" onclick="goP('dash')" id="mn-dash"><i class="fas fa-chart-pie"></i>Dashboard</button>
+  <button class="mn-btn" onclick="goP('bilty')" id="mn-bilty"><i class="fas fa-file-alt"></i>Bilty</button>
+  <button class="mn-btn" onclick="goP('inv')" id="mn-inv"><i class="fas fa-file-invoice"></i>Invoice</button>
 </div>
 
-<!-- COMPANY MODAL -->
-<div class="overlay" id="compModal">
-  <div class="modal">
-    <h3>🏭 Company Save Karo</h3>
-    <div class="mgrid">
-      <div class="fg" style="grid-column:1/-1;"><label>Company Name *</label><input id="mCN"/></div>
-      <div class="fg"><label>PAN No</label><input id="mCP"/></div>
-      <div class="fg"><label>GSTIN</label><input id="mCG"/></div>
-      <div class="fg" style="grid-column:1/-1;"><label>Address</label><input id="mCA"/></div>
-      <div class="fg"><label>State Code</label><input id="mCS"/></div>
-      <div class="fg"><label>Email</label><input id="mCE"/></div>
-      <div class="fg"><label>Account Name</label><input id="mCAN"/></div>
-      <div class="fg"><label>Account No</label><input id="mCANo"/></div>
-      <div class="fg"><label>IFS Code</label><input id="mCIF"/></div>
-      <div class="fg"><label>Bank Name</label><input id="mCB"/></div>
-    </div>
-    <div class="macts">
-      <button class="btn btn-ghost" onclick="closeModal('compModal')">Cancel</button>
-      <button class="btn btn-dark" onclick="saveComp()">💾 Save</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast"><i class="fas fa-check-circle"></i><span id="toastMsg"></span></div>
 
 <script>
-// ══════════════════
-// STATE
-// ══════════════════
-let db=null, bills={}, parties={}, companies={}, logoData='', rows=[];
+let db=null,bilties={},invoices={},sRows=[],eBId=null,eIId=null,rChart=null;
 
-// ══════════════════
-// FIREBASE INIT
-// ══════════════════
 try{
-  firebase.initializeApp(FIREBASE_CONFIG);
-  db=firebase.database();
-  db.ref('.info/connected').on('value',s=>{
-    const ok=s.val()===true;
-    document.getElementById('syncDot').className='dot'+(ok?'':' off');
-    document.getElementById('syncTxt').textContent=ok?'🟢 Live Sync':'🔴 Offline';
+firebase.initializeApp(FB);db=firebase.database();
+db.ref(".info/connected").on("value",s=>{const ok=s.val()===true;document.getElementById("sdot").className="dot"+(ok?"":' off');document.getElementById("stxt").textContent=ok?"Live Sync On":"Offline";});
+db.ref("bilties3").on("value",s=>{bilties=s.val()||{};rendBT();updDash();document.getElementById("bCount").textContent=Object.keys(bilties).length;});
+db.ref("invoices3").on("value",s=>{invoices=s.val()||{};rendIT();updDash();document.getElementById("iCount").textContent=Object.keys(invoices).length;});
+}catch(e){console.error(e);}
+
+const PAGES=["dash","bilty","inv"];
+const PT={"dash":["Dashboard","Overview & summary"],"bilty":["Bilty Management","Create & manage LR receipts"],"inv":["Invoice Management","Create & manage freight invoices"]};
+function goP(p){
+  PAGES.forEach(x=>{
+    document.getElementById("pg-"+x).classList.toggle("on",x===p);
+    const si=document.getElementById("si-"+x);if(si)si.classList.toggle("active",x===p);
+    const mn=document.getElementById("mn-"+x);if(mn)mn.classList.toggle("active",x===p);
   });
-  db.ref('bills').on('value',s=>{
-    bills=s.val()||{};
-    renderList();
-    const c=Object.keys(bills).length;
-    document.getElementById('billCount').textContent=c?'('+c+' bills)':'';
-  });
-  db.ref('parties').on('value',s=>{parties=s.val()||{};renderPartySel();renderParties();});
-  db.ref('companies').on('value',s=>{companies=s.val()||{};renderCompSel();renderCompanies();});
-  db.ref('settings/logo').on('value',s=>{if(s.val()){logoData=s.val();setLogo(logoData);}});
-}catch(e){
-  console.error('Firebase error:',e);
-  document.getElementById('syncTxt').textContent='⚠️ DB Error';
+  if(PT[p]){document.getElementById("ptitle").textContent=PT[p][0];document.getElementById("psub").textContent=PT[p][1];}
+  if(p==="dash")updDash();
 }
 
-// ══════════════════
-// INIT FORM
-// ══════════════════
-(function init(){
-  const today=new Date().toISOString().split('T')[0];
-  const due=new Date();due.setDate(due.getDate()+31);
-  document.getElementById('fDate').value=today;
-  document.getElementById('fDue').value=due.toISOString().split('T')[0];
-  // Restore remembered fields
-  const fs=['fcName','fcPAN','fcPAN2','fcGSTIN','fcState','fcBank','fcAccN','fcAccNo','fcIFSC','fcEmail','fcPhone','fcAddr','fPN','fGST','fPh','fAddr','fFrom'];
-  fs.forEach(id=>{try{const v=localStorage.getItem('al_'+id);const el=document.getElementById(id);if(v&&el)el.value=v;}catch(e){}});
-  // Restore selected party/company
-  setTimeout(()=>{
-    try{
-      const lp=localStorage.getItem('al_lastParty');
-      const lc=localStorage.getItem('al_lastComp');
-      if(lp&&parties[lp]){document.getElementById('partySel').value=lp;fillParty(lp,true);}
-      if(lc&&companies[lc]){document.getElementById('compSel').value=lc;fillComp(lc,true);}
-    }catch(e){}
-  },1500);
-  setBillNo();
-  rows=[mkRow(today)];
-  renderRows();
-})();
-
-function setBillNo(){
-  const n=Object.keys(bills).length;
-  document.getElementById('fBillNo').value='2025/26/'+String(n+38).padStart(3,'0');
+function updDash(){
+  const bl=Object.values(bilties),iv=Object.values(invoices);
+  document.getElementById("dB").textContent=bl.length;
+  document.getElementById("dI").textContent=iv.length;
+  const tot=iv.reduce((s,i)=>s+parseFloat(i.grand||0),0);
+  document.getElementById("dR").textContent="₹"+tot.toLocaleString("en-IN");
+  document.getElementById("dP").textContent=iv.filter(i=>i.status!=="Paid").length;
+  document.getElementById("dRB").innerHTML=bl.slice(-5).reverse().map(b=>`<tr><td><b style="color:var(--ac)">${b.gr}</b></td><td>${fd(b.date)}</td><td>${b.from||""}→${b.to||""}</td><td><b>${b.truck||""}</b></td><td>₹${parseFloat(b.amounts?.gt||0).toLocaleString("en-IN")}</td></tr>`).join("")||`<tr><td colspan="5"><div class="empty-state"><i class="fas fa-inbox"></i><h3>No bilties yet</h3></div></td></tr>`;
+  document.getElementById("dRI").innerHTML=iv.slice(-5).reverse().map(i=>`<tr><td><b style="color:var(--ac)">${i.billNo}</b></td><td>${i.custNm||"—"}</td><td>₹${parseFloat(i.grand||0).toLocaleString("en-IN")}</td><td><span class="badge ${i.status==="Paid"?"bg-gn":i.status==="Cancelled"?"bg-rd":"bg-yw"}">${i.status}</span></td></tr>`).join("")||`<tr><td colspan="4"><div class="empty-state"><i class="fas fa-inbox"></i><h3>No invoices yet</h3></div></td></tr>`;
+  drawChart(iv);
+}
+function drawChart(iv){
+  const m={};iv.forEach(i=>{if(!i.date)return;const d=new Date(i.date),k=(d.getMonth()+1)+"/"+d.getFullYear();m[k]=(m[k]||0)+parseFloat(i.grand||0);});
+  const keys=Object.keys(m).slice(-6),vals=keys.map(k=>m[k]);
+  const ctx=document.getElementById("rchart").getContext("2d");
+  if(rChart)rChart.destroy();
+  rChart=new Chart(ctx,{type:"bar",data:{labels:keys,datasets:[{label:"Revenue (₹)",data:vals,backgroundColor:"rgba(26,26,46,.75)",borderRadius:8,borderSkipped:false}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:"#f1f5f9"},ticks:{callback:v=>"₹"+v.toLocaleString("en-IN")}},x:{grid:{display:false}}}}});
 }
 
-function mkRow(date){
-  return{date,lr:'',dest:'',cn:'',truck:'',invNo:'',pkgs:'',wt:'',arrival:date,delivery:date,truckType:'19FT06 TYRE',freight:0,toPoint:0,unload:0,srcDet:0,dstDet:0};
+/* BILTY FORM */
+function showBF(id=null){eBId=id;document.getElementById("bList").style.display="none";document.getElementById("bForm").style.display="block";document.getElementById("bFT").textContent=id?"Edit Bilty":"New Bilty";id?fillBF(bilties[id]):resetBF();}
+function hideBF(){document.getElementById("bList").style.display="block";document.getElementById("bForm").style.display="none";eBId=null;}
+function fillBF(b){const s=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v||"";};s("bGR",b.gr);s("bDate",b.date);s("bStat",b.status);s("bBNo",b.billNo);s("bCoNm",b.c0?.name);s("bCoAd",b.c0?.addr);s("bCoGs",b.c0?.gstin);s("bCoPh",b.c0?.ph);s("bCeNm",b.c1?.name);s("bCeAd",b.c1?.addr);s("bCeGs",b.c1?.gstin);s("bCePh",b.c1?.ph);s("bFrom",b.from);s("bTo",b.to);s("bTrk",b.truck);s("bPkg",b.pkg?.n||0);s("bPart",b.pkg?.p);s("bWt",b.pkg?.w||0);s("bGV",b.gv||0);s("bFr",b.rates?.fr||0);s("bLd",b.rates?.ld||0);s("bWC",b.rates?.wc||0);s("bGRC",b.rates?.gr||50);s("bGP",b.rates?.gp||0);s("bAdv",b.amounts?.adv||0);s("bGPB",b.gpb||"Consignee");calcB();}
+function resetBF(){const today=new Date().toISOString().split("T")[0];document.getElementById("bDate").value=today;document.getElementById("bGR").value="GR-"+(Object.keys(bilties).length+65);document.getElementById("bStat").value="Pending";["bBNo","bCoNm","bCoAd","bCoGs","bCoPh","bCeNm","bCeAd","bCeGs","bCePh","bFrom","bTo","bTrk","bPart"].forEach(id=>document.getElementById(id).value="");["bPkg","bWt","bGV","bFr","bLd","bWC","bAdv","bGP"].forEach(id=>document.getElementById(id).value=0);document.getElementById("bGRC").value=50;document.getElementById("bGPB").value="Consignee";calcB();}
+function calcB(){const g=id=>parseFloat(document.getElementById(id).value)||0;const fr=g("bFr"),ld=g("bLd"),wc=g("bWC"),grc=g("bGRC"),gp=g("bGP"),adv=g("bAdv");const sub=fr+ld+wc+grc,gst=sub*gp/100,gt=sub+gst,bal=gt-adv;document.getElementById("bFtB").textContent="₹"+sub.toFixed(2);document.getElementById("bADV").textContent="₹"+adv.toFixed(2);document.getElementById("bBAL").textContent="₹"+bal.toFixed(2);document.getElementById("bGST").textContent="₹"+gst.toFixed(2);document.getElementById("bFtP").textContent="₹"+bal.toFixed(2);document.getElementById("bGT").textContent="₹"+gt.toFixed(2);}
+function getBD(){const g=id=>parseFloat(document.getElementById(id).value)||0,s=id=>document.getElementById(id).value;const fr=g("bFr"),ld=g("bLd"),wc=g("bWC"),grc=g("bGRC"),gp=g("bGP"),adv=g("bAdv");const sub=fr+ld+wc+grc,gst=sub*gp/100,gt=sub+gst,bal=gt-adv;return{gr:s("bGR"),date:s("bDate"),status:s("bStat"),billNo:s("bBNo"),c0:{name:s("bCoNm"),addr:s("bCoAd"),gstin:s("bCoGs"),ph:s("bCoPh")},c1:{name:s("bCeNm"),addr:s("bCeAd"),gstin:s("bCeGs"),ph:s("bCePh")},from:s("bFrom"),to:s("bTo"),truck:s("bTrk"),pkg:{n:parseInt(s("bPkg"))||0,p:s("bPart"),w:g("bWt")},rates:{fr,ld,wc,gr:grc,gp},amounts:{sub,adv,bal,gst,ftb:sub,ftp:bal,gt},gv:g("bGV"),gpb:s("bGPB"),ts:Date.now()};}
+async function saveB(){const d=getBD();if(!d.c0.name||!d.from||!d.to||!d.truck){toast("Fill required fields (*)","er");return;}if(!db){toast("DB not connected","er");return;}if(eBId){await db.ref("bilties3/"+eBId).set({...d,id:eBId});}else{const r=db.ref("bilties3").push();await r.set({...d,id:r.key});}toast("Bilty saved successfully!","ok");hideBF();}
+async function saveBPDF(){const d=getBD();if(!d.c0.name||!d.from||!d.to||!d.truck){toast("Fill required fields (*)","er");return;}if(db){if(eBId){await db.ref("bilties3/"+eBId).set({...d,id:eBId});}else{const r=db.ref("bilties3").push();await r.set({...d,id:r.key});}}makeBPDF(d);hideBF();}
+
+/* BILTY TABLE */
+let bFlt="";
+function filterB(){bFlt=document.getElementById("bSrch").value.toLowerCase();rendBT();}
+function rendBT(){const list=Object.values(bilties).sort((a,b)=>(b.ts||0)-(a.ts||0));const fl=bFlt?list.filter(b=>[b.gr,b.truck,b.from,b.to,b.c0?.name,b.c1?.name].some(v=>(v||"").toLowerCase().includes(bFlt))):list;const tb=document.getElementById("bTb");if(!fl.length){tb.innerHTML=`<tr><td colspan="10"><div class="empty-state"><i class="fas fa-file-alt"></i><h3>No bilties found</h3><p>Create your first bilty</p></div></td></tr>`;return;}tb.innerHTML=fl.map(b=>`<tr><td class="cbc"><input type="checkbox" class="bcb" value="${b.id}" onchange="updBM()"></td><td><b style="color:var(--ac)">${b.gr}</b></td><td>${fd(b.date)}</td><td>${b.c0?.name||"—"}</td><td>${b.c1?.name||"—"}</td><td><span style="font-size:12px;font-weight:600;">${b.from||""}→${b.to||""}</span></td><td><code style="background:#f1f5f9;padding:2px 8px;border-radius:4px;font-size:12px;">${b.truck||""}</code></td><td><b>₹${parseFloat(b.amounts?.gt||0).toLocaleString("en-IN")}</b></td><td><span class="badge ${b.status==="Delivered"?"bg-gn":b.status==="In Transit"?"bg-bl":"bg-yw"}">${b.status||"Pending"}</span></td><td><div style="display:flex;gap:4px;justify-content:center;"><button class="btn btn-outline btn-icon btn-xs" onclick="showBF('${b.id}')" title="Edit"><i class="fas fa-edit"></i></button><button class="btn btn-primary btn-icon btn-xs" onclick="makeBPDF(bilties['${b.id}'])" title="PDF"><i class="fas fa-file-pdf"></i></button><button class="btn btn-danger btn-icon btn-xs" onclick="delB('${b.id}')" title="Delete"><i class="fas fa-trash"></i></button></div></td></tr>`).join("");}
+function updBM(){const n=document.querySelectorAll(".bcb:checked").length;document.getElementById("bMbar").classList.toggle("on",n>0);document.getElementById("bSelC").textContent=n;}
+function togAllB(cb){document.querySelectorAll(".bcb").forEach(c=>c.checked=cb.checked);updBM();}
+function clearBSel(){document.querySelectorAll(".bcb").forEach(c=>c.checked=false);updBM();document.getElementById("bAll").checked=false;}
+async function delB(id){if(!confirm("Delete this bilty?"))return;await db.ref("bilties3/"+id).remove();toast("Bilty deleted","ok");}
+
+/* INVOICE FORM */
+function showIF(id=null){eIId=id;document.getElementById("iList").style.display="none";document.getElementById("iForm").style.display="block";document.getElementById("iFT").textContent=id?"Edit Invoice":"New Invoice";if(id){const iv=invoices[id];const s=(eid,v)=>{const e=document.getElementById(eid);if(e)e.value=v||"";};s("iBNo",iv.billNo);s("iDate",iv.date);s("iDue",iv.dueDate);s("iFrom",iv.fromLoc||"Roorkee");s("iCNm",iv.custNm);s("iCGs",iv.custGs);s("iCPh",iv.custPh);s("iCAd",iv.custAd);s("iStat",iv.status||"Pending");s("iNote",iv.notes);sRows=(iv.rows||[]).map(r=>({...r}));}else{const today=new Date().toISOString().split("T")[0];const due=new Date();due.setDate(due.getDate()+31);document.getElementById("iBNo").value="2025/26/"+String(Object.keys(invoices).length+38).padStart(3,"0");document.getElementById("iDate").value=today;document.getElementById("iDue").value=due.toISOString().split("T")[0];document.getElementById("iFrom").value="Roorkee";document.getElementById("iStat").value="Pending";["iCNm","iCGs","iCPh","iCAd","iNote"].forEach(id=>document.getElementById(id).value="");sRows=[mkSR(today)];}rendSR();}
+function hideIF(){document.getElementById("iList").style.display="block";document.getElementById("iForm").style.display="none";eIId=null;}
+function mkSR(d){return{date:d,lr:"",dest:"",cn:"",truck:"",invNo:"",pkgs:"",wt:"",arrival:d,delivery:d,trType:"19FT06 TYRE",fr:0,tp:0,ul:0,sd:0,dd:0};}
+function addSR(){sRows.push(mkSR(new Date().toISOString().split("T")[0]));rendSR();}
+function delSR(i){if(sRows.length===1){toast("Minimum 1 row required","er");return;}sRows.splice(i,1);rendSR();}
+function srT(r){return(r.fr||0)+(r.tp||0)+(r.ul||0)+(r.sd||0)+(r.dd||0);}
+function calcS(){sRows.forEach((_,i)=>{const e=document.getElementById("srt"+i);if(e)e.textContent="₹"+srT(sRows[i]).toLocaleString("en-IN");});const s=k=>sRows.reduce((a,r)=>a+(r[k]||0),0);document.getElementById("iTF").textContent="₹"+s("fr").toLocaleString("en-IN");document.getElementById("iTE").textContent="₹"+(s("tp")+s("ul")).toLocaleString("en-IN");document.getElementById("iTD").textContent="₹"+(s("sd")+s("dd")).toLocaleString("en-IN");document.getElementById("iTG").textContent="₹"+sRows.reduce((a,r)=>a+srT(r),0).toLocaleString("en-IN");}
+function rendSR(){document.getElementById("sBody").innerHTML=sRows.map((r,i)=>`<tr><td><b>${i+1}</b></td><td><input type="date" value="${r.date}" oninput="sRows[${i}].date=this.value" style="min-width:118px;font-size:11px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:6px;"></td><td><input value="${r.lr}" oninput="sRows[${i}].lr=this.value" style="width:52px;font-size:11px;padding:4px 5px;border:1px solid #e2e8f0;border-radius:6px;"></td><td><input value="${r.dest}" oninput="sRows[${i}].dest=this.value" style="width:78px;font-size:11px;padding:4px 5px;border:1px solid #e2e8f0;border-radius:6px;"></td><td><input value="${r.cn}" oninput="sRows[${i}].cn=this.value" style="width:52px;font-size:11px;padding:4px 5px;border:1px solid #e2e8f0;border-radius:6px;"></td><td><input value="${r.truck}" oninput="sRows[${i}].truck=this.value" style="width:88px;font-size:11px;padding:4px 5px;border:1px solid #e2e8f0;border-radius:6px;"></td><td><input value="${r.invNo}" oninput="sRows[${i}].invNo=this.value" style="width:95px;font-size:11px;padding:4px 5px;border:1px solid #e2e8f0;border-radius:6px;"></td><td><input type="number" value="${r.pkgs}" oninput="sRows[${i}].pkgs=this.value" style="width:48px;font-size:11px;padding:4px 5px;border:1px solid #e2e8f0;border-radius:6px;"></td><td><input type="number" value="${r.wt}" oninput="sRows[${i}].wt=this.value" style="width:60px;font-size:11px;padding:4px 5px;border:1px solid #e2e8f0;border-radius:6px;"></td><td><input type="date" value="${r.arrival}" oninput="sRows[${i}].arrival=this.value" style="min-width:118px;font-size:11px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:6px;"></td><td><input type="date" value="${r.delivery}" oninput="sRows[${i}].delivery=this.value" style="min-width:118px;font-size:11px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:6px;"></td><td><input value="${r.trType}" oninput="sRows[${i}].trType=this.value" style="width:88px;font-size:11px;padding:4px 5px;border:1px solid #e2e8f0;border-radius:6px;"></td><td><input type="number" value="${r.fr||0}" oninput="sRows[${i}].fr=parseFloat(this.value)||0;calcS()" style="width:72px;font-size:11px;padding:4px 5px;border:1px solid #e2e8f0;border-radius:6px;"></td><td><input type="number" value="${r.tp||0}" oninput="sRows[${i}].tp=parseFloat(this.value)||0;calcS()" style="width:65px;font-size:11px;padding:4px 5px;border:1px solid #e2e8f0;border-radius:6px;"></td><td><input type="number" value="${r.ul||0}" oninput="sRows[${i}].ul=parseFloat(this.value)||0;calcS()" style="width:65px;font-size:11px;padding:4px 5px;border:1px solid #e2e8f0;border-radius:6px;"></td><td><input type="number" value="${r.sd||0}" oninput="sRows[${i}].sd=parseFloat(this.value)||0;calcS()" style="width:62px;font-size:11px;padding:4px 5px;border:1px solid #e2e8f0;border-radius:6px;"></td><td><input type="number" value="${r.dd||0}" oninput="sRows[${i}].dd=parseFloat(this.value)||0;calcS()" style="width:62px;font-size:11px;padding:4px 5px;border:1px solid #e2e8f0;border-radius:6px;"></td><td style="font-weight:700;color:var(--gn);white-space:nowrap;" id="srt${i}">₹${srT(r).toLocaleString("en-IN")}</td><td><button class="btn btn-danger btn-icon btn-xs" onclick="delSR(${i})"><i class="fas fa-times"></i></button></td></tr>`).join("");calcS();}
+function getID(){return{billNo:document.getElementById("iBNo").value,date:document.getElementById("iDate").value,dueDate:document.getElementById("iDue").value,fromLoc:document.getElementById("iFrom").value,custNm:document.getElementById("iCNm").value,custGs:document.getElementById("iCGs").value,custPh:document.getElementById("iCPh").value,custAd:document.getElementById("iCAd").value,status:document.getElementById("iStat").value,notes:document.getElementById("iNote").value,rows:sRows.map(r=>({...r})),grand:sRows.reduce((a,r)=>a+srT(r),0),ts:Date.now()};}
+async function saveI(){const d=getID();if(!d.custNm||!d.billNo){toast("Customer name & Bill No required!","er");return;}if(!db){toast("DB not connected","er");return;}if(eIId){await db.ref("invoices3/"+eIId).set({...d,id:eIId});}else{const r=db.ref("invoices3").push();await r.set({...d,id:r.key});}toast("Invoice saved successfully!","ok");hideIF();}
+async function saveIPDF(){const d=getID();if(!d.custNm||!d.billNo){toast("Customer name & Bill No required!","er");return;}if(db){if(eIId){await db.ref("invoices3/"+eIId).set({...d,id:eIId});}else{const r=db.ref("invoices3").push();await r.set({...d,id:r.key});}}makeIPDF(d);hideIF();}
+
+/* INVOICE TABLE */
+let iFlt="";
+function filterI(){iFlt=document.getElementById("iSrch").value.toLowerCase();rendIT();}
+function rendIT(){const list=Object.values(invoices).sort((a,b)=>(b.ts||0)-(a.ts||0));const fl=iFlt?list.filter(i=>[i.billNo,i.custNm,i.fromLoc].some(v=>(v||"").toLowerCase().includes(iFlt))):list;const tb=document.getElementById("iTb");if(!fl.length){tb.innerHTML=`<tr><td colspan="10"><div class="empty-state"><i class="fas fa-file-invoice"></i><h3>No invoices found</h3><p>Create your first invoice</p></div></td></tr>`;return;}tb.innerHTML=fl.map(i=>`<tr><td class="cbc"><input type="checkbox" class="icb" value="${i.id}" onchange="updIM()"></td><td><b style="color:var(--ac)">${i.billNo}</b></td><td>${fd(i.date)}</td><td>${i.dueDate?fd(i.dueDate):"—"}</td><td>${i.custNm||"—"}</td><td>${i.fromLoc||"—"}</td><td><span class="badge bg-bl">${(i.rows||[]).length} shipment${(i.rows||[]).length!==1?"s":""}</span></td><td><b>₹${parseFloat(i.grand||0).toLocaleString("en-IN")}</b></td><td><span class="badge ${i.status==="Paid"?"bg-gn":i.status==="Cancelled"?"bg-rd":i.status==="Partial"?"bg-pu":"bg-yw"}">${i.status||"Pending"}</span></td><td><div style="display:flex;gap:4px;justify-content:center;"><button class="btn btn-outline btn-icon btn-xs" onclick="showIF('${i.id}')" title="Edit"><i class="fas fa-edit"></i></button><button class="btn btn-primary btn-icon btn-xs" onclick="makeIPDF(invoices['${i.id}'])" title="PDF"><i class="fas fa-file-pdf"></i></button><button class="btn btn-danger btn-icon btn-xs" onclick="delI('${i.id}')" title="Delete"><i class="fas fa-trash"></i></button></div></td></tr>`).join("");}
+function updIM(){const n=document.querySelectorAll(".icb:checked").length;document.getElementById("iMbar").classList.toggle("on",n>0);document.getElementById("iSelC").textContent=n;}
+function togAllI(cb){document.querySelectorAll(".icb").forEach(c=>c.checked=cb.checked);updIM();}
+function clearISel(){document.querySelectorAll(".icb").forEach(c=>c.checked=false);updIM();document.getElementById("iAll").checked=false;}
+async function delI(id){if(!confirm("Delete?"))return;await db.ref("invoices3/"+id).remove();toast("Invoice deleted","ok");}
+
+/* MERGE */
+function mergeB(){const ids=[...document.querySelectorAll(".bcb:checked")].map(c=>c.value);if(!ids.length){toast("Select at least 1 bilty!","er");return;}const{jsPDF}=window.jspdf;const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a5"});ids.forEach((id,i)=>{if(i>0)doc.addPage();drawBPage(doc,bilties[id]);});doc.save("Merged-Bilties-"+ids.length+".pdf");toast("Merged PDF downloaded!","ok");}
+function mergeI(){const ids=[...document.querySelectorAll(".icb:checked")].map(c=>c.value);if(!ids.length){toast("Select at least 1 invoice!","er");return;}const{jsPDF}=window.jspdf;const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a4"});ids.forEach((id,i)=>{if(i>0)doc.addPage();drawIPage(doc,invoices[id]);});doc.save("Merged-Invoices-"+ids.length+".pdf");toast("Merged PDF downloaded!","ok");}
+
+/* BILTY PDF */
+function makeBPDF(b){const{jsPDF}=window.jspdf;const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a5"});drawBPage(doc,b);doc.save("Bilty-"+b.gr+".pdf");toast("Bilty PDF ready!","ok");}
+function drawBPage(doc,b){
+  const pw=148,mg=8;let y=mg;
+  doc.setFillColor(248,248,248);doc.rect(0,0,pw,35,"F");doc.setDrawColor(0);doc.line(0,35,pw,35);
+  doc.setFillColor(26,26,46);doc.circle(mg+9,y+10,9,"F");doc.setTextColor(255,255,255);doc.setFontSize(6.5);doc.setFont("helvetica","bold");doc.text("ARSH",mg+9,y+8,null,null,"center");doc.text("AL",mg+9,y+12,null,null,"center");doc.setDrawColor(255,255,255);doc.circle(mg+9,y+10,9,"D");
+  doc.setTextColor(0,0,0);doc.setFontSize(15);doc.setFont("helvetica","bold");doc.text("ARSH LOGISTICS",pw/2,y+7,null,null,"center");doc.setFontSize(7);doc.setFont("helvetica","normal");doc.text("(Fleet Owner & Transport Contractor)",pw/2,y+12,null,null,"center");doc.setFontSize(6);doc.text("ADD. DEHRADUN ROAD, OPP POWER HOUSE, NEAR SHERIYA CO.",pw/2,y+17,null,null,"center");doc.text("BHAGWANPUR, DISTT- HARIDWAR (U.K.) 247661",pw/2,y+21,null,null,"center");doc.setFontSize(6.5);doc.text("E-MAIL- ARSHLOGISTICS2025@GMAIL.COM",pw/2,y+26,null,null,"center");
+  doc.setFontSize(6.5);doc.setFont("helvetica","bold");doc.text("Mob.: 9411561287",pw-mg,y+5,null,null,"right");doc.setFont("helvetica","normal");doc.setFontSize(5.5);doc.text("GSTIN: 05HOBPD5470P1ZM",pw-mg,y+9,null,null,"right");doc.text("PAN No.: HOBPD5470P",pw-mg,y+13,null,null,"right");
+  y+=37;
+  doc.setFillColor(230,235,245);doc.rect(mg,y,pw-2*mg,7,"FD");doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.setTextColor(0,0,0);doc.text("G.R. No. "+b.gr,mg+3,y+5.2);doc.text("Date: "+fd(b.date),pw-mg,y+5.2,null,null,"right");y+=9;
+  const hw=(pw-2*mg)/2-0.5;doc.setDrawColor(0);doc.rect(mg,y,hw,26);doc.rect(mg+hw+1,y,hw,26);doc.setFontSize(6.5);doc.setFont("helvetica","bold");doc.text("CONSIGNOR M/s",mg+2,y+5);doc.text("CONSIGNEE M/s",mg+hw+3,y+5);doc.setFont("helvetica","normal");doc.setFontSize(6);
+  const cl=doc.splitTextToSize((b.c0?.name||"")+(b.c0?.addr?"
+"+b.c0.addr:""),hw-5);doc.text(cl,mg+2,y+10);if(b.c0?.gstin)doc.text("GSTIN: "+b.c0.gstin,mg+2,y+21);if(b.c0?.ph)doc.text("Ph: "+b.c0.ph,mg+2,y+25);
+  const el=doc.splitTextToSize((b.c1?.name||"")+(b.c1?.addr?"
+"+b.c1.addr:""),hw-5);doc.text(el,mg+hw+3,y+10);if(b.c1?.gstin)doc.text("GSTIN: "+b.c1.gstin,mg+hw+3,y+21);if(b.c1?.ph)doc.text("Ph: "+b.c1.ph,mg+hw+3,y+25);y+=27;
+  doc.setFillColor(245,246,250);doc.rect(mg,y,pw-2*mg,7,"FD");doc.setFontSize(6.5);doc.setFont("helvetica","normal");doc.setTextColor(0,0,0);doc.text("From: "+(b.from||""),mg+2,y+5);doc.text("Truck No: "+(b.truck||""),pw/2,y+5,null,null,"center");doc.text("To: "+(b.to||""),pw-mg,y+5,null,null,"right");y+=8;
+  const c1=18,c2=35,c3=18,c4=pw-2*mg-c1-c2-c3,rx=mg+c1+c2+c3,rh=c4/2;
+  doc.setFillColor(235,238,245);doc.rect(mg,y,c1,7,"FD");doc.rect(mg+c1,y,c2,7,"FD");doc.rect(mg+c1+c2,y,c3,7,"FD");doc.rect(rx,y,c4,7,"FD");doc.setFont("helvetica","bold");doc.setFontSize(5.8);doc.text("No. of
+Packages",mg+c1/2,y+3,null,null,"center");doc.text("PARTICULARS",mg+c1+c2/2,y+4.5,null,null,"center");doc.text("Weight",mg+c1+c2+c3/2,y+4.5,null,null,"center");doc.line(rx+rh,y,rx+rh,y+7);doc.text("RATE",rx+rh/2,y+4.5,null,null,"center");doc.text("Freight to
+be Billed",rx+rh+rh/2,y+3,null,null,"center");y+=7;
+  const dH=42;doc.rect(mg,y,c1,dH);doc.rect(mg+c1,y,c2,dH);doc.rect(mg+c1+c2,y,c3,dH);doc.rect(rx,y,c4,dH);doc.line(rx+rh,y,rx+rh,y+dH);
+  doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text(String(b.pkg?.n||0),mg+c1/2,y+14,null,null,"center");doc.setFont("helvetica","normal");doc.setFontSize(6);const ptxt=doc.splitTextToSize(b.pkg?.p||"",c2-4);doc.text(ptxt,mg+c1+2,y+7);doc.setFont("helvetica","bold");doc.setFontSize(7);doc.text((b.pkg?.w||0)+" Kgs",mg+c1+c2+c3/2,y+13,null,null,"center");
+  doc.setFont("helvetica","normal");doc.setFontSize(5.5);[["Freight","₹"+(b.rates?.fr||0)],["Loading","₹"+(b.rates?.ld||0)],["Weighting Charges","₹"+(b.rates?.wc||0)],["G.R. Charge","50/-"],["GST @"+(b.rates?.gp||0)+"%",""]].forEach((r,i)=>{doc.text(r[0],rx+2,y+8+i*6);if(r[1])doc.text(r[1],rx+rh-2,y+8+i*6,null,null,"right");});
+  doc.setFont("helvetica","bold");doc.setFontSize(6);doc.text("Freight to be Billed",rx+rh+rh/2,y+9,null,null,"center");doc.setFontSize(8);doc.text("₹"+parseFloat(b.amounts?.ftb||0).toFixed(2),rx+rh+rh/2,y+16,null,null,"center");doc.setFontSize(6);doc.text("Advance",rx+rh+rh/2,y+23,null,null,"center");doc.setFontSize(8);doc.text("₹"+parseFloat(b.amounts?.adv||0).toFixed(2),rx+rh+rh/2,y+30,null,null,"center");doc.setFontSize(6);doc.text("Balance",rx+rh+rh/2,y+37,null,null,"center");doc.setFontSize(8);doc.text("₹"+parseFloat(b.amounts?.bal||0).toFixed(2),rx+rh+rh/2,y+43,null,null,"center");y+=dH;
+  doc.rect(mg,y,c1+c2+c3,8);doc.rect(rx,y,c4,8);doc.setFont("helvetica","normal");doc.setFontSize(5.5);doc.text("Value of Goods: ₹"+(b.gv||0)+"     Bill No.: "+(b.billNo||""),mg+2,y+5);doc.setFont("helvetica","bold");doc.setFontSize(6);doc.text("Freight to Pay Rs.",rx+rh/2,y+3.5,null,null,"center");doc.setFontSize(8);doc.text("₹"+parseFloat(b.amounts?.ftp||0).toFixed(2),rx+rh/2,y+7.5,null,null,"center");y+=8;
+  doc.rect(mg,y,c1+c2+c3,7);doc.setFont("helvetica","bold");doc.setFontSize(5.5);doc.text("GST PAYABLE BY:",mg+2,y+5);doc.setFont("helvetica","normal");const gpb=b.gpb||"Consignee";doc.text("Consignee "+(gpb==="Consignee"?"☑":"☐"),mg+33,y+5);doc.text("Consignor "+(gpb==="Consignor"?"☑":"☐"),mg+55,y+5);doc.text("Transporter "+(gpb==="Transporter"?"☑":"☐"),mg+77,y+5);y+=7;
+  doc.setFillColor(210,225,250);doc.rect(mg,y,pw-2*mg,9,"FD");doc.setFont("helvetica","bold");doc.setFontSize(10);doc.setTextColor(0,0,0);doc.text("Grand Total: ₹"+parseFloat(b.amounts?.gt||0).toFixed(2),pw/2,y+6.5,null,null,"center");y+=12;
+  doc.setFont("helvetica","italic");doc.setFontSize(5);doc.setTextColor(80,80,80);doc.text("Note: Register Insurance Policy of yourself more than if invoice value Rs. 25,000/-",mg,y+3);doc.text("Received the following goods vide terms & conditions of the Vo. given on reverse",mg,y+7);y+=12;
+  doc.setDrawColor(0);doc.setTextColor(0);doc.line(mg,y+10,mg+32,y+10);doc.setFont("helvetica","normal");doc.setFontSize(6);doc.text("Consignor Sign",mg,y+13);doc.line(mg+46,y+10,mg+78,y+10);doc.text("Driver Sign",mg+46,y+13);doc.setFont("helvetica","bold");doc.setFontSize(7);doc.text("For: ARSH LOGISTICS",pw-mg,y+6,null,null,"right");doc.line(pw-mg-38,y+10,pw-mg,y+10);doc.setFont("helvetica","normal");doc.setFontSize(6);doc.text("Auth. Signatory",pw-mg,y+13,null,null,"right");
 }
 
-// ══════════════════
-// REMEMBER FIELDS
-// ══════════════════
-function rem(id,val){try{localStorage.setItem('al_'+id,val);}catch(e){}}
-
-// ══════════════════
-// LOGO
-// ══════════════════
-function uploadLogo(inp){
-  const f=inp.files[0];if(!f)return;
-  if(f.size>500000){toast('Logo 500KB se chhota hona chahiye!',true);return;}
-  const r=new FileReader();
-  r.onload=async e=>{
-    logoData=e.target.result;setLogo(logoData);
-    if(db)await db.ref('settings/logo').set(logoData);
-    toast('Logo save ho gaya! ✅');
-  };
-  r.readAsDataURL(f);
-}
-function setLogo(src){
-  ['1','2'].forEach(n=>{
-    const img=document.getElementById('limg'+n);const ph=document.getElementById('lph'+n);
-    if(img){img.src=src;img.style.display='block';}if(ph)ph.style.display='none';
-  });
-  const h=document.getElementById('lhint');if(h)h.style.display='none';
-}
-
-// ══════════════════
-// TABS
-// ══════════════════
-const TABS=['new','list','parties','companies','settings'];
-function goTab(t){
-  TABS.forEach((x,i)=>{
-    document.getElementById('sec-'+x).classList.toggle('active',x===t);
-    document.querySelectorAll('.tab')[i].classList.toggle('active',x===t);
-    const nb=document.getElementById('nb-'+x);if(nb)nb.classList.toggle('active',x===t);
-  });
-  if(t==='list')renderList();
-  if(t==='parties')renderParties();
-  if(t==='companies')renderCompanies();
-}
-
-// ══════════════════
-// MODALS
-// ══════════════════
-function openModal(type){
-  document.getElementById(type==='party'?'partyModal':'compModal').classList.add('open');
-}
-function closeModal(id){
-  document.getElementById(id).classList.remove('open');
-  document.querySelectorAll('#'+id+' input').forEach(el=>el.value='');
-}
-
-// ══════════════════
-// PARTY
-// ══════════════════
-async function saveParty(){
-  const name=document.getElementById('mPN').value.trim();
-  if(!name){toast('Party naam zaroori hai!',true);return;}
-  if(!db){toast('Database connect nahi! Page reload karo.',true);return;}
-  const ref=db.ref('parties').push();
-  await ref.set({id:ref.key,name,gstin:document.getElementById('mPG').value,phone:document.getElementById('mPPh').value,addr:document.getElementById('mPAddr').value,ts:Date.now()});
-  closeModal('partyModal');toast('Party save: '+name+' ✅');
-}
-function fillParty(id,silent=false){
-  if(!id)return;const p=parties[id];if(!p)return;
-  const s=(eid,v)=>{const el=document.getElementById(eid);if(el)el.value=v||'';};
-  s('fPN',p.name);s('fGST',p.gstin);s('fPh',p.phone);s('fAddr',p.addr);
-  try{localStorage.setItem('al_lastParty',id);}catch(e){}
-  if(!silent)toast('Party: '+p.name);
-}
-function renderPartySel(){
-  const sel=document.getElementById('partySel');
-  const last=localStorage.getItem('al_lastParty')||'';
-  const list=Object.values(parties).sort((a,b)=>(b.ts||0)-(a.ts||0));
-  sel.innerHTML='<option value="">-- Party select karo --</option>'+list.map(p=>`<option value="${p.id}"${p.id===last?' selected':''}>${p.name}${p.gstin?' ('+p.gstin+')':''}</option>`).join('');
-  if(last&&parties[last])fillParty(last,true);
-}
-function renderParties(){
-  const w=document.getElementById('partiesWrap');if(!w)return;
-  const list=Object.values(parties).sort((a,b)=>(b.ts||0)-(a.ts||0));
-  if(!list.length){w.innerHTML='<div class="empty"><div style="font-size:30px;">🏢</div><div style="font-weight:600;margin-top:8px;">Koi party nahi</div></div>';return;}
-  w.innerHTML=list.map(p=>`<div class="p-item"><div class="p-ico">🏢</div><div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;">${p.name}</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;">${[p.gstin,p.phone,p.addr].filter(Boolean).join(' • ')}</div></div><button class="btn btn-red btn-sm" onclick="delParty('${p.id}')">Del</button></div>`).join('');
-}
-async function delParty(id){
-  if(!confirm('Delete karna hai?'))return;
-  await db.ref('parties/'+id).remove();toast('Party deleted!');
-}
-
-// ══════════════════
-// COMPANY
-// ══════════════════
-async function saveComp(){
-  const name=document.getElementById('mCN').value.trim();
-  if(!name){toast('Company naam zaroori hai!',true);return;}
-  if(!db){toast('Database connect nahi! Page reload karo.',true);return;}
-  const ref=db.ref('companies').push();
-  await ref.set({id:ref.key,name,pan:document.getElementById('mCP').value,gstin:document.getElementById('mCG').value,addr:document.getElementById('mCA').value,state:document.getElementById('mCS').value,email:document.getElementById('mCE').value,accN:document.getElementById('mCAN').value,accNo:document.getElementById('mCANo').value,ifsc:document.getElementById('mCIF').value,bank:document.getElementById('mCB').value,ts:Date.now()});
-  closeModal('compModal');toast('Company save: '+name+' ✅');
-}
-function fillComp(id,silent=false){
-  if(!id)return;const c=companies[id];if(!c)return;
-  const s=(eid,v)=>{const el=document.getElementById(eid);if(el)el.value=v||'';};
-  s('fcName',c.name);s('fcPAN',c.pan);s('fcPAN2',c.pan);s('fcGSTIN',c.gstin);
-  s('fcAddr',c.addr);s('fcState',c.state);s('fcEmail',c.email);s('fcPhone',c.phone||'');
-  s('fcAccN',c.accN);s('fcAccNo',c.accNo);s('fcIFSC',c.ifsc);s('fcBank',c.bank);
-  try{localStorage.setItem('al_lastComp',id);}catch(e){}
-  if(!silent)toast('Company: '+c.name);
-}
-function renderCompSel(){
-  const sel=document.getElementById('compSel');
-  const last=localStorage.getItem('al_lastComp')||'';
-  const list=Object.values(companies).sort((a,b)=>(b.ts||0)-(a.ts||0));
-  sel.innerHTML='<option value="">-- Company select karo --</option>'+list.map(c=>`<option value="${c.id}"${c.id===last?' selected':''}>${c.name}${c.gstin?' ('+c.gstin+')':''}</option>`).join('');
-  if(last&&companies[last])fillComp(last,true);
-}
-function renderCompanies(){
-  const w=document.getElementById('companiesWrap');if(!w)return;
-  const list=Object.values(companies).sort((a,b)=>(b.ts||0)-(a.ts||0));
-  if(!list.length){w.innerHTML='<div class="empty"><div style="font-size:30px;">🏭</div><div style="font-weight:600;margin-top:8px;">Koi company nahi</div></div>';return;}
-  w.innerHTML=list.map(c=>`<div class="p-item"><div class="p-ico">🏭</div><div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;">${c.name}</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;">${[c.gstin,c.pan,c.accNo,c.ifsc].filter(Boolean).join(' • ')}</div></div><button class="btn btn-red btn-sm" onclick="delComp('${c.id}')">Del</button></div>`).join('');
-}
-async function delComp(id){
-  if(!confirm('Delete karna hai?'))return;
-  await db.ref('companies/'+id).remove();toast('Company deleted!');
-}
-
-// ══════════════════
-// ROWS
-// ══════════════════
-function addRow(){
-  const today=new Date().toISOString().split('T')[0];
-  rows.push(mkRow(today));renderRows();
-}
-function delRow(i){
-  if(rows.length===1){toast('Kam se kam 1 row chahiye!',true);return;}
-  rows.splice(i,1);renderRows();
-}
-function rT(r){return(r.freight||0)+(r.toPoint||0)+(r.unload||0)+(r.srcDet||0)+(r.dstDet||0);}
-function calcTot(){
-  rows.forEach((_,i)=>{const e=document.getElementById('rt'+i);if(e)e.textContent='₹'+rT(rows[i]).toLocaleString('en-IN');});
-  const s=k=>rows.reduce((a,r)=>a+(r[k]||0),0);
-  document.getElementById('tF').textContent='₹'+s('freight').toLocaleString('en-IN');
-  document.getElementById('tE').textContent='₹'+(s('toPoint')+s('unload')).toLocaleString('en-IN');
-  document.getElementById('tD').textContent='₹'+(s('srcDet')+s('dstDet')).toLocaleString('en-IN');
-  document.getElementById('tG').textContent='₹'+rows.reduce((a,r)=>a+rT(r),0).toLocaleString('en-IN');
-}
-function renderRows(){
-  document.getElementById('shBody').innerHTML=rows.map((r,i)=>`<tr>
-    <td><b>${i+1}</b></td>
-    <td><input type="date" value="${r.date}" oninput="rows[${i}].date=this.value" style="min-width:115px;"/></td>
-    <td><input value="${r.lr}" oninput="rows[${i}].lr=this.value" style="width:50px;"/></td>
-    <td><input value="${r.dest}" oninput="rows[${i}].dest=this.value" style="width:75px;"/></td>
-    <td><input value="${r.cn}" oninput="rows[${i}].cn=this.value" style="width:50px;"/></td>
-    <td><input value="${r.truck}" oninput="rows[${i}].truck=this.value" style="width:85px;" placeholder="UP27AT7421"/></td>
-    <td><input value="${r.invNo}" oninput="rows[${i}].invNo=this.value" style="width:95px;"/></td>
-    <td><input type="number" value="${r.pkgs}" oninput="rows[${i}].pkgs=this.value" style="width:45px;"/></td>
-    <td><input type="number" value="${r.wt}" oninput="rows[${i}].wt=this.value" style="width:58px;"/></td>
-    <td><input type="date" value="${r.arrival}" oninput="rows[${i}].arrival=this.value" style="min-width:115px;"/></td>
-    <td><input type="date" value="${r.delivery}" oninput="rows[${i}].delivery=this.value" style="min-width:115px;"/></td>
-    <td><input value="${r.truckType}" oninput="rows[${i}].truckType=this.value" style="width:85px;"/></td>
-    <td><input type="number" value="${r.freight||0}" oninput="rows[${i}].freight=parseFloat(this.value)||0;calcTot()" style="width:70px;"/></td>
-    <td><input type="number" value="${r.toPoint||0}" oninput="rows[${i}].toPoint=parseFloat(this.value)||0;calcTot()" style="width:65px;"/></td>
-    <td><input type="number" value="${r.unload||0}" oninput="rows[${i}].unload=parseFloat(this.value)||0;calcTot()" style="width:65px;"/></td>
-    <td><input type="number" value="${r.srcDet||0}" oninput="rows[${i}].srcDet=parseFloat(this.value)||0;calcTot()" style="width:62px;"/></td>
-    <td><input type="number" value="${r.dstDet||0}" oninput="rows[${i}].dstDet=parseFloat(this.value)||0;calcTot()" style="width:62px;"/></td>
-    <td style="font-weight:700;color:#059669;white-space:nowrap;" id="rt${i}">₹${rT(r).toLocaleString('en-IN')}</td>
-    <td><button class="del-btn" onclick="delRow(${i})">×</button></td>
-  </tr>`).join('');
-  calcTot();
-}
-
-// ══════════════════
-// BILL SAVE / CLEAR
-// ══════════════════
-function getBill(){
-  return{
-    billNo:document.getElementById('fBillNo').value,
-    date:document.getElementById('fDate').value,
-    dueDate:document.getElementById('fDue').value,
-    fromLoc:document.getElementById('fFrom').value,
-    cName:document.getElementById('fcName').value,
-    cPAN:document.getElementById('fcPAN').value,
-    cGSTIN:document.getElementById('fcGSTIN').value,
-    cAddr:document.getElementById('fcAddr').value,
-    cState:document.getElementById('fcState').value,
-    cEmail:document.getElementById('fcEmail').value,
-    cPhone:document.getElementById('fcPhone').value,
-    cAccN:document.getElementById('fcAccN').value,
-    cAccNo:document.getElementById('fcAccNo').value,
-    cIFSC:document.getElementById('fcIFSC').value,
-    cBank:document.getElementById('fcBank').value,
-    partyName:document.getElementById('fPN').value,
-    gstin:document.getElementById('fGST').value,
-    phone:document.getElementById('fPh').value,
-    addr:document.getElementById('fAddr').value,
-    rows:rows.map(r=>({...r})),
-    grand:rows.reduce((a,r)=>a+rT(r),0),
-    ts:Date.now()
-  };
-}
-async function saveBill(){
-  const b=getBill();
-  if(!b.partyName){toast('Party naam zaroori hai!',true);return;}
-  if(!db){toast('Database connect nahi! Page reload karo.',true);return;}
-  const ref=db.ref('bills').push();
-  await ref.set({...b,id:ref.key});
-  toast('Invoice save ho gayi! ✅');
-  clearForm();
-}
-function clearForm(){
-  const today=new Date().toISOString().split('T')[0];
-  setBillNo();
-  document.getElementById('fDate').value=today;
-  rows=[mkRow(today)];renderRows();
-  // party/company fields stay (remembered)
-}
-
-// ══════════════════
-// BILL LIST
-// ══════════════════
-function renderList(){
-  const w=document.getElementById('listWrap');if(!w)return;
-  const list=Object.values(bills).sort((a,b)=>(b.ts||0)-(a.ts||0));
-  if(!list.length){w.innerHTML='<div class="empty"><div style="font-size:30px;">🧾</div><div style="font-weight:600;margin-top:8px;">Koi bill nahi</div></div>';return;}
-  const total=list.reduce((s,b)=>s+(b.grand||0),0);
-  const summary=`<div class="sum-grid">
-    <div class="sum-card" style="background:#f0f4ff;border:1px solid #dde3f0;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;margin-bottom:5px;">Total Bills</div><div style="font-size:24px;font-weight:700;color:#1a1a2e;">${list.length}</div></div>
-    <div class="sum-card" style="background:#f0fff8;border:1px solid #bbf7d0;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;margin-bottom:5px;">Total Amount</div><div style="font-size:22px;font-weight:700;color:#059669;">₹${total.toLocaleString('en-IN')}</div></div>
-    <div class="sum-card" style="background:#fffbeb;border:1px solid #fde68a;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;margin-bottom:5px;">Average</div><div style="font-size:22px;font-weight:700;color:#d97706;">₹${Math.round(total/list.length).toLocaleString('en-IN')}</div></div>
-  </div>`;
-  w.innerHTML=summary+list.map(b=>`<div class="bill-item">
-    <div><div style="font-size:12px;font-weight:700;color:#0f3460;">${b.billNo}</div><div style="font-size:10px;color:#9ca3af;">${fmt(b.date)}</div></div>
-    <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;">${b.partyName||'—'}</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;">${b.cName||''} • ${(b.rows||[]).length} shipment</div></div>
-    <div style="font-size:15px;font-weight:700;color:#059669;min-width:85px;text-align:right;">₹${(b.grand||0).toLocaleString('en-IN')}</div>
-    <div class="bill-acts">
-      <button class="btn btn-sm" style="background:white;border:1px solid #d1d5db;" onclick="editBill('${b.id}')">Edit</button>
-      <button class="btn btn-dark btn-sm" onclick="pdfSaved('${b.id}')">⬇ PDF</button>
-      <button class="btn btn-red btn-sm" onclick="delBill('${b.id}')">Del</button>
-    </div>
-  </div>`).join('');
-}
-async function delBill(id){
-  if(!confirm('Delete karna hai?'))return;
-  await db.ref('bills/'+id).remove();toast('Bill deleted!');
-}
-function editBill(id){
-  const b=bills[id];if(!b)return;
-  const s=(eid,v)=>{const el=document.getElementById(eid);if(el)el.value=v||'';};
-  s('fBillNo',b.billNo);s('fDate',b.date);s('fDue',b.dueDate);s('fFrom',b.fromLoc);
-  s('fcName',b.cName);s('fcPAN',b.cPAN);s('fcPAN2',b.cPAN);s('fcGSTIN',b.cGSTIN);
-  s('fcAddr',b.cAddr);s('fcState',b.cState);s('fcEmail',b.cEmail);s('fcPhone',b.cPhone);
-  s('fcAccN',b.cAccN);s('fcAccNo',b.cAccNo);s('fcIFSC',b.cIFSC);s('fcBank',b.cBank);
-  s('fPN',b.partyName);s('fGST',b.gstin);s('fPh',b.phone);s('fAddr',b.addr);
-  rows=(b.rows||[]).map(r=>({...r}));renderRows();goTab('new');
-}
-
-// ══════════════════
-// PDF
-// ══════════════════
-function pdfFromForm(){const b=getBill();if(!b.partyName){toast('Party naam zaroori hai!',true);return;}makePDF(b);}
-function pdfSaved(id){const b=bills[id];if(b)makePDF(b);}
-function fmt(d){if(!d)return'';const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
-function splitAddr(a){if(!a)return['',''];const m=Math.ceil(a.length/2);let at=a.lastIndexOf(',',m);if(at<10)at=a.indexOf(',',m);if(at<0)at=m;return[a.substring(0,at+1).trim(),a.substring(at+1).trim()];}
-function numW(n){
-  const a=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
-  const b=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
-  if(!n)return'Zero';
-  function h(x){if(!x)return'';if(x<20)return a[x]+' ';if(x<100)return b[Math.floor(x/10)]+' '+(x%10?a[x%10]+' ':'');if(x<1000)return a[Math.floor(x/100)]+' Hundred '+(x%100?h(x%100):'');if(x<100000)return h(Math.floor(x/1000))+'Thousand '+(x%1000?h(x%1000):'');if(x<10000000)return h(Math.floor(x/100000))+'Lakh '+(x%100000?h(x%100000):'');return h(Math.floor(x/10000000))+'Crore '+(x%10000000?h(x%10000000):'');}
-  return h(Math.round(n)).trim()+' Rupees Only';
-}
-function makePDF(b){
-  const{jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+/* INVOICE PDF */
+function makeIPDF(b){const{jsPDF}=window.jspdf;const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a4"});drawIPage(doc,b);doc.save("Invoice-"+b.billNo+".pdf");toast("Invoice PDF ready!","ok");}
+function drawIPage(doc,b){
   const pw=297,mg=10;let y=mg;
-  const cN=b.cName||'ARSH Logistics';
-  // Header
-  doc.setFillColor(26,26,46);doc.rect(0,0,pw,32,'F');
-  if(logoData){try{doc.addImage(logoData,'PNG',mg,4,22,22);}catch(e){}}
-  const lx=logoData?mg+26:mg;
-  doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);doc.text(cN,lx,12);
-  const ap=splitAddr(b.cAddr||'');
-  doc.setFontSize(7.5);doc.setFont('helvetica','normal');doc.text(ap[0],lx,18,{maxWidth:120});if(ap[1])doc.text(ap[1],lx,23,{maxWidth:120});
-  doc.setFontSize(20);doc.setFont('helvetica','bold');doc.text('INVOICE',pw/2,20,null,null,'center');
-  y=36;
-  // To & Bill boxes
-  doc.setDrawColor(200,200,200);doc.setFillColor(252,252,250);
-  doc.rect(mg,y,88,32,'FD');doc.rect(pw-mg-70,y,70,32,'FD');
-  doc.setTextColor(30,30,30);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('To,',mg+3,y+7);
-  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text(b.partyName||'',mg+3,y+13,{maxWidth:83});
-  doc.setFontSize(8);if(b.addr)doc.text(b.addr,mg+3,y+19,{maxWidth:83});if(b.gstin)doc.text('GSTIN: '+b.gstin,mg+3,y+28);
-  doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(26,26,46);doc.text('Freight Bill No: '+b.billNo,pw-mg-67,y+8);
-  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(50,50,50);
-  doc.text('Invoice Date:  '+fmt(b.date),pw-mg-67,y+16);doc.text('Due Date:      '+(b.dueDate?fmt(b.dueDate):''),pw-mg-67,y+23);
-  doc.setFontSize(8.5);doc.setFont('helvetica','normal');doc.setTextColor(60,60,60);doc.text('From location: '+(b.fromLoc||''),mg,y+37);y+=40;
-  // Table
-  const cols=[{h:'S.\nNo',w:7},{h:'Shipment\nDate',w:19},{h:'LR\nNo.',w:9},{h:'Dest.',w:15},{h:'CN\nNumber',w:9},{h:'Truck No',w:18},{h:'Invoice No',w:21},{h:'Pkgs',w:8},{h:'Weight\n(Kgs)',w:11},{h:'Date of\nArrival',w:19},{h:'Date of\nDelivery',w:19},{h:'Truck\nType',w:17},{h:'Freight\nAmt(Rs.)',w:15},{h:'To Point\nChg(Rs.)',w:14},{h:'Unloading\nChg(Rs.)',w:14},{h:'Src Det\n(Rs.)',w:13},{h:'Dst Det\n(Rs.)',w:13},{h:'Total\nAmt(Rs.)',w:15}];
+  doc.setFillColor(26,26,46);doc.rect(0,0,pw,32,"F");doc.setFontSize(15);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);doc.text(CO.name,mg,12);doc.setFontSize(7.5);doc.setFont("helvetica","normal");const ap=sAd(CO.a1+", "+CO.a2);doc.text(ap[0],mg,18,{maxWidth:140});if(ap[1])doc.text(ap[1],mg,23,{maxWidth:140});doc.setFontSize(20);doc.setFont("helvetica","bold");doc.text("INVOICE",pw/2,20,null,null,"center");y=36;
+  doc.setDrawColor(200,200,200);doc.setFillColor(252,252,250);doc.rect(mg,y,88,32,"FD");doc.rect(pw-mg-70,y,70,32,"FD");doc.setTextColor(30,30,30);doc.setFont("helvetica","bold");doc.setFontSize(9);doc.text("To,",mg+3,y+7);doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text(b.custNm||"",mg+3,y+13,{maxWidth:83});doc.setFontSize(8);if(b.custAd)doc.text(b.custAd,mg+3,y+19,{maxWidth:83});if(b.custGs)doc.text("GSTIN: "+b.custGs,mg+3,y+28);doc.setFont("helvetica","bold");doc.setFontSize(9.5);doc.setTextColor(26,26,46);doc.text("Freight Bill No: "+b.billNo,pw-mg-67,y+8);doc.setFont("helvetica","normal");doc.setFontSize(8.5);doc.setTextColor(50,50,50);doc.text("Invoice Date:  "+fd(b.date),pw-mg-67,y+16);doc.text("Due Date:      "+(b.dueDate?fd(b.dueDate):""),pw-mg-67,y+23);doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(60,60,60);doc.text("From location: "+(b.fromLoc||""),mg,y+37);y+=40;
+  const cols=[{h:"S.
+No",w:7},{h:"Shipment
+Date",w:19},{h:"LR
+No.",w:9},{h:"Dest.",w:15},{h:"CN
+Number",w:9},{h:"Truck No",w:18},{h:"Invoice No",w:21},{h:"Pkgs",w:8},{h:"Weight
+(Kgs)",w:11},{h:"Date of
+Arrival",w:19},{h:"Date of
+Delivery",w:19},{h:"Truck
+Type",w:17},{h:"Freight
+Amt(Rs.)",w:15},{h:"To Point
+Chg(Rs.)",w:14},{h:"Unloading
+Chg(Rs.)",w:14},{h:"Src Det
+(Rs.)",w:13},{h:"Dst Det
+(Rs.)",w:13},{h:"Total
+Amt(Rs.)",w:15}];
   const tW=cols.reduce((s,c)=>s+c.w,0);const sc=cols.map(c=>({...c,sw:c.w*(pw-2*mg)/tW}));
-  doc.setFillColor(26,26,46);doc.rect(mg,y,pw-2*mg,12,'F');
-  doc.setTextColor(255,255,255);doc.setFontSize(6);doc.setFont('helvetica','bold');
-  let cx=mg;sc.forEach(c=>{const ls=c.h.split('\n'),lh=3.5,sy=y+(12-ls.length*lh)/2+lh*0.7;ls.forEach((l,li)=>doc.text(l,cx+c.sw/2,sy+li*lh,null,null,'center'));if(cx+c.sw<pw-mg){doc.setDrawColor(255,255,255);doc.line(cx+c.sw,y,cx+c.sw,y+12);}cx+=c.sw;});y+=12;
-  doc.setFont('helvetica','normal');doc.setFontSize(7.2);
-  (b.rows||[]).forEach((r,ri)=>{
-    doc.setFillColor(ri%2===0?255:248,ri%2===0?255:248,ri%2===0?255:244);doc.rect(mg,y,pw-2*mg,9,'F');
-    doc.setDrawColor(210,210,210);doc.rect(mg,y,pw-2*mg,9,'D');doc.setTextColor(20,20,20);
-    const vals=[ri+1,fmt(r.date),r.lr,r.dest,r.cn,r.truck,r.invNo,r.pkgs,r.wt,fmt(r.arrival),fmt(r.delivery),r.truckType,Number(r.freight||0).toFixed(2),Number(r.toPoint||0).toFixed(2),Number(r.unload||0).toFixed(2),Number(r.srcDet||0).toFixed(2),Number(r.dstDet||0).toFixed(2),rT(r).toFixed(2)];
-    cx=mg;sc.forEach((c,ci)=>{if(ci>0){doc.setDrawColor(210,210,210);doc.line(cx,y,cx,y+9);}doc.text(String(vals[ci]??''),cx+c.sw/2,y+5.8,null,null,'center');cx+=c.sw;});y+=9;
-  });
-  const grand=(b.rows||[]).reduce((s,r)=>s+rT(r),0);
-  doc.setFillColor(232,240,255);doc.rect(mg,y,pw-2*mg,9,'F');doc.setDrawColor(180,190,220);doc.rect(mg,y,pw-2*mg,9,'D');
-  doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(26,26,46);
-  doc.text('Total in words (Rs.) : '+numW(grand),mg+3,y+6);doc.text(grand.toFixed(2),pw-mg-3,y+6,null,null,'right');y+=13;
-  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(90,90,90);
-  doc.text('Any changes or discrepancies should be highlighted within 5 working days else it would be considered final.',mg,y);
-  doc.text('Please send all remittance details to "'+(b.cEmail||'info@arshlogistics.com')+'".',mg,y+4);y+=11;
-  // Bank table
-  const bw=105;
-  doc.setFillColor(26,26,46);doc.rect(mg,y,bw,8,'F');doc.setTextColor(255,255,255);doc.setFontSize(8);doc.setFont('helvetica','bold');doc.text('Bank & Company Details',mg+bw/2,y+5.5,null,null,'center');y+=8;
-  [['1. PAN No.',b.cPAN||'—'],['2. GST No.',b.cGSTIN||'—'],['3. State Code',b.cState||'—'],['4. Bank Name',b.cBank||'—'],['5. Account Name',b.cAccN||cN],['6. Account No',b.cAccNo||'—'],['7. IFS Code',b.cIFSC||'—']].forEach(([k,v],i)=>{
-    doc.setFillColor(i%2===0?252:246,i%2===0?252:248,i%2===0?250:255);doc.rect(mg,y,bw,7,'F');doc.setDrawColor(200,200,200);doc.rect(mg,y,bw,7,'D');
-    const lbW=35;doc.setFont('helvetica','bold');doc.setFontSize(7.2);doc.setTextColor(80,80,80);doc.text(k,mg+3,y+4.8);
-    doc.setDrawColor(200,200,200);doc.line(mg+lbW,y,mg+lbW,y+7);
-    doc.setFont('helvetica','normal');doc.setTextColor(20,20,20);doc.text(String(v),mg+lbW+3,y+4.8);y+=7;
-  });
-  // Signature
-  const sy=y-24;
-  doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(26,26,46);doc.text('For '+cN.toUpperCase(),pw-mg-65,sy+8);
-  doc.setDrawColor(80,80,80);doc.line(pw-mg-65,sy+22,pw-mg,sy+22);
-  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(80,80,80);doc.text('(Authorized Signatory)',pw-mg-3,sy+27,null,null,'right');
-  doc.save('Invoice-'+(b.billNo||'bill').replace(/\//g,'-')+'-'+(b.partyName||'party').replace(/\s+/g,'_')+'.pdf');
-  toast('PDF ready! 🎉');
+  doc.setFillColor(26,26,46);doc.rect(mg,y,pw-2*mg,12,"F");doc.setTextColor(255,255,255);doc.setFontSize(6);doc.setFont("helvetica","bold");let cx=mg;sc.forEach(c=>{const ls=c.h.split("
+"),lh=3.5,sy=y+(12-ls.length*lh)/2+lh*0.7;ls.forEach((l,li)=>doc.text(l,cx+c.sw/2,sy+li*lh,null,null,"center"));if(cx+c.sw<pw-mg){doc.setDrawColor(255,255,255);doc.line(cx+c.sw,y,cx+c.sw,y+12);}cx+=c.sw;});y+=12;
+  doc.setFont("helvetica","normal");doc.setFontSize(7.2);(b.rows||[]).forEach((r,ri)=>{doc.setFillColor(ri%2===0?255:248,ri%2===0?255:248,ri%2===0?255:244);doc.rect(mg,y,pw-2*mg,9,"F");doc.setDrawColor(210,210,210);doc.rect(mg,y,pw-2*mg,9,"D");doc.setTextColor(20,20,20);const vals=[ri+1,fd(r.date),r.lr,r.dest,r.cn,r.truck,r.invNo,r.pkgs,r.wt,fd(r.arrival),fd(r.delivery),r.trType,Number(r.fr||0).toFixed(2),Number(r.tp||0).toFixed(2),Number(r.ul||0).toFixed(2),Number(r.sd||0).toFixed(2),Number(r.dd||0).toFixed(2),srT(r).toFixed(2)];cx=mg;sc.forEach((c,ci)=>{if(ci>0){doc.setDrawColor(210,210,210);doc.line(cx,y,cx,y+9);}doc.text(String(vals[ci]??""),cx+c.sw/2,y+5.8,null,null,"center");cx+=c.sw;});y+=9;});
+  const grand=(b.rows||[]).reduce((s,r)=>s+srT(r),0);doc.setFillColor(232,240,255);doc.rect(mg,y,pw-2*mg,9,"F");doc.setDrawColor(180,190,220);doc.rect(mg,y,pw-2*mg,9,"D");doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.setTextColor(26,26,46);doc.text("Total in words (Rs.) : "+nW(grand),mg+3,y+6);doc.text(grand.toFixed(2),pw-mg-3,y+6,null,null,"right");y+=13;
+  doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(90,90,90);doc.text("Any changes or discrepancies should be highlighted within 5 working days else it would be considered final.",mg,y);doc.text("Please send all remittance details to \""+CO.email+"\".",mg,y+4);y+=11;
+  const bw=105;doc.setFillColor(26,26,46);doc.rect(mg,y,bw,8,"F");doc.setTextColor(255,255,255);doc.setFontSize(8);doc.setFont("helvetica","bold");doc.text("Bank & Company Details",mg+bw/2,y+5.5,null,null,"center");y+=8;
+  [[CO.pan,"PAN No."],[CO.gstin,"GST No."],[CO.state,"State Code"],[CO.bank,"Bank Name"],[CO.accN,"Account Name"],[CO.accNo,"Account No"],[CO.ifsc,"IFS Code"]].forEach(([v,k],i)=>{doc.setFillColor(i%2===0?252:246,i%2===0?252:248,i%2===0?250:255);doc.rect(mg,y,bw,7,"F");doc.setDrawColor(200,200,200);doc.rect(mg,y,bw,7,"D");const lW=38;doc.setFont("helvetica","normal");doc.setFontSize(7.2);doc.setTextColor(80,80,80);doc.text(k,mg+3,y+4.8);doc.setDrawColor(200,200,200);doc.line(mg+lW,y,mg+lW,y+7);doc.setFont("helvetica","bold");doc.setTextColor(20,20,20);doc.text(String(v),mg+lW+3,y+4.8);y+=7;});
+  const sy=y-24;doc.setFont("helvetica","bold");doc.setFontSize(9.5);doc.setTextColor(26,26,46);doc.text("For "+CO.name,pw-mg-65,sy+8);doc.setDrawColor(80,80,80);doc.line(pw-mg-65,sy+22,pw-mg,sy+22);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(80,80,80);doc.text("(Authorized Signatory)",pw-mg-3,sy+27,null,null,"right");
 }
 
-// ══════════════════
-// TOAST
-// ══════════════════
-// ══════════════════
-// PWA
-// ══════════════════
-let deferredPrompt=null;
-window.addEventListener('beforeinstallprompt',e=>{
-  e.preventDefault();
-  deferredPrompt=e;
-  const btn=document.getElementById('installBtn');
-  if(btn)btn.style.display='inline-flex';
-});
-window.addEventListener('appinstalled',()=>{
-  const btn=document.getElementById('installBtn');
-  if(btn)btn.style.display='none';
-  toast('App install ho gayi! 🎉');
-});
-function installApp(){
-  if(!deferredPrompt)return;
-  deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(()=>{
-    deferredPrompt=null;
-    const btn=document.getElementById('installBtn');
-    if(btn)btn.style.display='none';
-  });
-}
-if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js', {scope: './'})
-      .then(reg=>{
-        console.log('SW registered, scope:', reg.scope);
-        // Force update
-        reg.update();
-      })
-      .catch(e=>console.error('SW failed:', e));
-  });
-}
-
-function toast(msg,isErr=false,dur=2500){
-  const t=document.getElementById('toast');t.textContent=msg;
-  t.style.background=isErr?'#dc2626':'#1a1a2e';
-  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);
-}
+/* HELPERS */
+function fd(d){if(!d)return"";const p=d.split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:d;}
+function sAd(a){if(!a)return["",""];const m=Math.ceil(a.length/2);let at=a.lastIndexOf(",",m);if(at<10)at=a.indexOf(",",m);if(at<0)at=m;return[a.substring(0,at+1).trim(),a.substring(at+1).trim()];}
+function nW(n){const a=["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"],b=["","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"];if(!n)return"Zero";function h(x){if(!x)return"";if(x<20)return a[x]+" ";if(x<100)return b[Math.floor(x/10)]+" "+(x%10?a[x%10]+" ":"");if(x<1000)return a[Math.floor(x/100)]+" Hundred "+(x%100?h(x%100):"");if(x<100000)return h(Math.floor(x/1000))+"Thousand "+(x%1000?h(x%1000):"");if(x<10000000)return h(Math.floor(x/100000))+"Lakh "+(x%100000?h(x%100000):"");return h(Math.floor(x/10000000))+"Crore "+(x%10000000?h(x%10000000):"");}return h(Math.round(n)).trim()+" Rupees Only";}
+let tTimer;
+function toast(msg,type="",dur=3000){const t=document.getElementById("toast"),m=document.getElementById("toastMsg");m.textContent=msg;t.className="toast "+(type?type:"")+" on";clearTimeout(tTimer);tTimer=setTimeout(()=>t.classList.remove("on"),dur);}
+if(window.innerWidth<=900)document.getElementById("mnav").style.display="flex";
 </script>
 </body>
 </html>
